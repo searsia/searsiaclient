@@ -397,6 +397,8 @@ function moreResults(event) {
 function checkEmpty() {
     if (nrResults === 0) {
         $('#searsia-alert-bottom').html('No results.');
+    } else if (store.length <= 0) {
+        $('#searsia-alert-bottom').html('No more results.');
     } else {
         $('#searsia-alert-bottom').html('<a href="#more" id="more-results">More results &gt;&gt;</a>');
         $('#more-results').on('click', function (event) { moreResults(event); });
