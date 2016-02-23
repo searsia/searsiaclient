@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Searsia search client" />
+    <meta name="author" content="Searsia.com" />
+    <link id="favicon" rel="icon" type="image/png" href="images/search.png" />
+    <link rel="stylesheet" href="css/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/searsia.css" />
+    <title>Search</title>
+  </head>
+
+  <body>
+
+    <div class="container-fluid theme-search">
+
+      <div class="row">
+        <div class="col-md-8">
+          <div class="searsia-icon">
+             <a href="index.html"><img src="images/search.png" alt="" /></a>
+          </div>
+          <div class="searsia-form">
+            <form id="searsia-form">
+             <div class="input-group">
+               <input type="text" name="q" class="form-control" value="" />
+                <span class="input-group-btn">
+                  <button class="btn btn-default" type="submit" value="submit">
+                    <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                    <span class="sr-only">Search</span>
+                  </button>
+                </span>
+             </div>
+            </form>
+          </div>
+          <div>
+            <div class="searsia-top" id="searsia-alert-top"></div>
+            <div>&nbsp;</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-1">
+        </div>
+        <div class="col-md-7">
+          <div id="searsia-results-1"></div>
+          <div id="searsia-results-2"></div>
+          <div id="searsia-results-3"></div>
+        </div>
+        <div class="col-md-3">
+          <div id="searsia-sidebar">
+          </div>
+        </div>
+        <div class="col-md-1">
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-1">
+        </div>
+        <div class="col-md-7">
+          <div id="searsia-results-4"></div>
+          <div class="searsia-bottom" id="searsia-alert-bottom">
+            <noscript>Enable Javascript and use a modern browser to use University of Twente Search</noscript>
+          </div>
+        </div>
+        <div class="col-md-4">
+        </div>
+      </div>
+
+    </div> <!-- /container -->
+
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/searsia.js"></script>
+    <script> <!--
+      placeName({ });
+      placeIcon({ });
+      $(document).ready(function(){
+        var params = searsiaUrlParameters();
+        if (params.q != '') {
+          fillForm(params.q);
+          document.title += ": " + printableQuery(params.q);
+          getResources(params);
+        } else {
+          window.location.replace("index.html");
+        } 
+      });
+      -->
+    </script>
+
+  </body>
+</html>
+

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Searsia search client" />
+    <meta name="author" content="Searsia.com" />
+    <link id="favicon" rel="icon" type="image/png" href="images/search.png" />
+    <link rel="stylesheet" href="css/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/searsia.css" />
+    <title>Search</title>
+  </head>
+
+  <body>
+
+    <div class="container theme-home">
+
+      <div class="row">
+        <div class="col-md-2">
+        </div>
+        <div class="col-md-8">
+          <div class="searsia-home">
+            <div id="searsia-banner" style="display:none">
+            </div>
+            <form id="searsia-form" action="search.html">
+             <div class="input-group input-group-lg"> <!-- has-success / btn-success for green or: background-color:#37c871 -->
+               <input id="searsia-input" type="text" name="q" class="form-control" value="" />
+                <span class="input-group-btn">
+                  <button class="btn btn-primary" type="submit" value="submit">
+                    &nbsp;<span class="glyphicon glyphicon-search" aria-hidden="true"></span>&nbsp;
+                    <span class="sr-only">Search</span>
+                  </button>
+                </span>
+             </div>
+            </form>
+            <div class="searsia-bottom-home" id="searsia-alert-bottom">
+            </div>
+          </div>
+        </div>
+        <div class="col-md-2">
+        </div>
+      </div>
+   
+    </div> <!-- /container -->
+    <!-- TODO: http://jqueryui.com/autocomplete/ -->
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/searsia.js"></script>
+    <script> <!--
+      $(document).ready(function() {
+         placeBanner({ });
+         placeIcon({ });
+         placeName({ });
+         connectToServer();
+         $("#searsia-input").focus();
+         $("#searsia-banner").fadeIn();
+      });
+      -->
+    </script>
+
+  </body>
+</html>
+
