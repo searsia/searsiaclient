@@ -464,7 +464,7 @@ function inferMissingData(data, query) {
             if (resource.urltemplate != null) {
                 hit.url = fillUrlTemplate(resource.urltemplate, encodedQuery(hit.title), '');
             } else {
-                hit.url = fillUrlTemplate('search.html?q={q}', encodedQuery(hit.title), '');
+                hit.url = fillUrlTemplate('?q={q}', encodedQuery(hit.title), '');
             }
         } else {
             hit.url = correctUrl(resource.urltemplate, hit.url); //TODO: what if urltemplate is null?

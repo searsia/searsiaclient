@@ -125,6 +125,11 @@ body {
 
 .search-result > p > a {
   color:green;
+  text-decoration: none;
+}
+
+.search-result > p > a:hover {
+  text-decoration: underline;
 }
 
 .search-result h4 {
@@ -135,6 +140,14 @@ body {
     margin-bottom: 0.1em;
     margin-left: 0;
     margin-right: 0;
+}
+
+.search-result h4 a {
+  text-decoration: none;
+}
+
+.search-result h4 a:hover {
+  text-decoration: underline;
 }
 
 .search-result h4 img {
