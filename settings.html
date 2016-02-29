@@ -61,42 +61,48 @@
     <script src="js/searsia.js"></script>
     <script> <!--
       $(document).ready(function() {
+         connectToServer();
          placeBanner({ });
          $("#searsia-banner").fadeIn();
-         connectToServer();
+         if (localAllResoureIds().length > 0) {
+           showResults();
+         } else {
+           window.setTimeout(showResults, 5000); // Hope the server was connected within 5 sec.
+         }
 
-         result = '';
-         var ids = localAllResoureIds();
-         for (var i=0; i < ids.length; i += 1) {
-            result += '<a class="list-group-item" href="engine.html?r=' + ids[i] + '">';
-            var item = localGetResource(ids[i]);
-            var favicon = item.favicon;
-            if (favicon == null) {
+         function showResults() {
+           result = '';
+           var ids = localAllResoureIds();
+           for (var i=0; i < ids.length; i += 1) {
+             result += '<a class="list-group-item" href="engine.html?r=' + ids[i] + '">';
+             var item = localGetResource(ids[i]);
+             var favicon = item.favicon;
+             if (favicon == null) {
                favicon = 'images/settings-icon.png';
-            }
-            result += '<img src="' + favicon + '" width="16" height="16" /> ';
-            result += ids[i];
-            if (item.name != null) {
+             }
+             result += '<img src="' + favicon + '" width="16" height="16" /> ';
+             result += ids[i];
+             if (item.name != null) {
                result += ' (' + item.name + ')';
-            }
-            if (item.type != null && item.type === 'mother') {
+             }
+             if (item.type != null && item.type === 'mother') {
                if (item.apitemplate === API_TEMPLATE) {  // There can be only one mother
                  result += ' <span class="label label-primary">Mother</span>';
                } else {
                  item.type = null;
                  localSetResource(item);
                }
-            }
-            if (item.error != null && item.error !== '') {
+             }
+             if (item.error != null && item.error !== '') {
                result += ' <span class="label label-danger">' + item.error + '</span>';
-            }
-            result += '</a>'  
-         }
-         if (result !== '') {
+             }
+             result += '</a>'
+           }
+           if (result !== '') {
              $('#searsia-engines').html(result);
              $('#searsia-alert-bottom').html('');
+           }
          }
-         
       });
       -->
     </script>

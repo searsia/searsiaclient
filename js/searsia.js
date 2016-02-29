@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  * 
- * Searsia Client v0.2 spaghetti code:
+ * Searsia Client v1.2 spaghetti code:
  *   The web page should call getResources(params) 
- *   (using parameters fromsearsiaUrlParameters())
+ *   (using parameters from: searsiaUrlParameters())
  *   see: search.html
  *   Syntax checked with: jslint --eqeq --regexp --todo searsia.js
  */
 
-/*global $, window, alert, jQuery, localStorage*/
+/*global $, window, document, alert, jQuery, localStorage*/
 
 "use strict";
 
@@ -32,6 +32,7 @@ var AGG       = 1;   // 1=Aggregate results, 0=only boring links
 var pending   = 0;   // Number of search engines that are answering a query
 var nrResults = 0;   // Total number of results returned 
 var page      = 1;   // search result page
+var lang      = document.getElementsByTagName('html')[0].getAttribute('lang');    // used for language-dependent texts
 
 var store = {
 
@@ -374,6 +375,45 @@ function htmlSuggestionResult(resource, hit) {
 }
 
 
+function moreResultsText() {
+    var result = "More results &gt;&gt;";
+    if (lang === "nl") {
+        result = "Meer resultaten &gt;&gt;";
+    } else if (lang === "de") {
+        result =  "Mehr Ergebnisse &gt;&gt;";
+    } else if (lang === "fr") {
+        result = "Plus de résultats &gt;&gt;";
+    }
+    return result;
+}
+
+
+function noMoreResultsText() {
+    var result = "No more results.";
+    if (lang === "nl") {
+        result = "Geen andere resultaten.";
+    } else if (lang === "de") {
+        result =  "Keine Ergebnisse mehr.";
+    } else if (lang === "fr") {
+        result = "Pas plus de résultats.";
+    }
+    return result;
+}
+
+
+function noResultsText() {
+    var result = "No results.";
+    if (lang === "nl") {
+        result = "Geen resultaten.";
+    } else if (lang === "de") {
+        result =  "Keine Ergebnisse.";
+    } else if (lang === "fr") {
+        result = "Pas de résultats.";
+    }
+    return result;
+}
+
+
 function moreResults(event) {
     var i, hit, maxi, query,
         result = '';
@@ -389,18 +429,19 @@ function moreResults(event) {
     }
     $('#searsia-results-4').append(result); // there are three divs for results, 1=top, 2=subtop, 3=rest, 4=more
     if (store.length <= 0) {
-        $('#searsia-alert-bottom').html('No more results.');
+        $('#searsia-alert-bottom').html(noMoreResultsText());
     }
+    // $wh.fireLayoutChangeEvent(document.getElementById("searsiasearch"));
 }
 
 
 function checkEmpty() {
     if (nrResults === 0) {
-        $('#searsia-alert-bottom').html('No results.');
+        $('#searsia-alert-bottom').html(noResultsText());
     } else if (store.length <= 0) {
-        $('#searsia-alert-bottom').html('No more results.');
+        $('#searsia-alert-bottom').html(noMoreResultsText());
     } else {
-        $('#searsia-alert-bottom').html('<a href="#more" id="more-results">More results &gt;&gt;</a>');
+        $('#searsia-alert-bottom').html('<a href="#more" id="more-results">' + moreResultsText() + '</a>');
         $('#more-results').on('click', function (event) { moreResults(event); });
     }
 }
@@ -732,6 +773,7 @@ function printResults(query, data, rank, olddata) {
     if (pending <= 0) {
         checkEmpty();
     }
+    // $wh.fireLayoutChangeEvent(document.getElementById("searsiasearch"));
 }
 
 
@@ -798,6 +840,7 @@ function queryResources(query, data) {
     if (pending < 1) {
         checkEmpty();
     }
+    // $wh.fireLayoutChangeEvent(document.getElementById("searchresults"));
 }
 
 
