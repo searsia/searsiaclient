@@ -24,8 +24,8 @@
 
 "use strict";
 
-var API_TEMPLATE = 'http://search.utwente.nl/searsia/search?q={q?}&r={r?}';
-//var API_TEMPLATE = 'http://localhost:16842/searsia/search?q={q?}&r={r?}';
+//var API_TEMPLATE = 'http://search.utwente.nl/searsia/search?q={q?}&r={r?}';
+var API_TEMPLATE = 'http://localhost:16842/searsia/search?q={q?}&r={r?}';
 
 
 var AGG       = 1;   // 1=Aggregate results, 0=only boring links
@@ -542,6 +542,25 @@ function inferMissingData(data, query) {
 }
 
 
+/*
+ * Updates data.hits, removing hits that have a 
+ * foundBefore date that is more than 2 weeks ago.
+ */
+function removeTooOldResults(data) {
+    var i, hit,
+        newHits = [],
+        count = data.hits.length;
+    if (count > 15) { count = 15; }
+    for (i = 0; i < count; i += 1) {
+        hit = data.hits[i];
+        if (hit.foundBefore == null || Date.now() - new Date(hit.foundBefore).getTime() < 1209600000) { // 1209600000 is two weeks in miliseconds
+            newHits.push(hit);
+        }
+    }
+    data.hits = newHits;
+}
+
+
 function htmlSubResultWeb(query, hit) {
     var title  = hit.title,
         descr  = hit.description,
@@ -767,6 +786,7 @@ function printResults(query, data, rank, olddata) {
         }
     } else {
         inferMissingData(olddata, query);
+        removeTooOldResults(olddata);
         printAggregatedResults(query, olddata, rank);
     }
     pending -= 1; // global
