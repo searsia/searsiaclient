@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  * 
- * Searsia Client v1.2 spaghetti code:
+ * Searsia Client v1.2.1 spaghetti code:
  *   The web page should call getResources(params) 
  *   (using parameters from: searsiaUrlParameters())
  *   see: search.html
@@ -24,8 +24,8 @@
 
 "use strict";
 
-//var API_TEMPLATE = 'http://search.utwente.nl/searsia/search?q={q?}&r={r?}';
-var API_TEMPLATE = 'http://localhost:16842/searsia/search?q={q?}&r={r?}';
+var API_TEMPLATE = 'http://search.utwente.nl/searsia/search?q={q?}&r={r?}';
+//var API_TEMPLATE = 'http://localhost:16842/searsia/search?q={q?}&r={r?}';
 
 
 var AGG       = 1;   // 1=Aggregate results, 0=only boring links
