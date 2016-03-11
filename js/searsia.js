@@ -24,7 +24,7 @@
 
 "use strict";
 
-var API_TEMPLATE = 'http://search.utwente.nl/searsia/search?q={q?}&r={r?}';
+var API_TEMPLATE = 'https://search.utwente.nl/searsia/search?q={q?}&r={r?}';
 //var API_TEMPLATE = 'http://localhost:16842/searsia/search?q={q?}&r={r?}';
 
 
