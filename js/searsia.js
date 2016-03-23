@@ -814,7 +814,8 @@ function getResults(query, rid, rank, olddata) {
 
 
 function queryResources(query, data) {
-    var rid, hits, olddata, oldquery,
+    var rid, hits, olddata, 
+        oldquery = "",
         i = 0,
         rank = 1,
         done = [];
@@ -831,7 +832,7 @@ function queryResources(query, data) {
                 rank += 1;
             }
         } else if (done[rid] !== 1) {
-            oldquery = hits[i].query;
+            //oldquery = hits[i].query; // disable 'cached' result
             olddata = { hits: [] };
             if (localExistsResource(rid)) {
                 olddata.resource = localGetResource(rid);
