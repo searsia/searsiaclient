@@ -250,7 +250,7 @@
           $('#searsia-debug-xml').html(' ');
           resource = form2Resource($('#searsia-engine-form').serializeArray());
           postObject.resource = resource;
-          postObject.searsia = 'v0.1.3';
+          postObject.searsia = 'v0.3.1';
           if (resource.engineType != null) {
               engineType = resource.engineType;
               delete resource.engineType;
@@ -280,11 +280,11 @@
                           count = 0;
                       } 
                       message = 'Update succeeded.\n200 Ok.\n' + count + ' result(s).\n' + timing + ' miliseconds.\n';
-                      $('#searsia-debug-result').html(message);
+                      $('#searsia-debug-result').text(message);
                       debug = data.debug;
-                      delete data.debug;
+                      if (debug != null) { delete data.debug; }
                       $('#searsia-debug-json').html(JSON.stringify(data, null, 2));
-                      $('#searsia-debug-xml').html(debug); // https://gist.github.com/sente/1083506
+                      $('#searsia-debug-xml').text(formatXML(debug)); // https://gist.github.com/sente/1083506
                       $('#searsia-delete-button').attr("disabled", false);
                       alertMessage('success', message);
                       newResource = data.resource;
@@ -296,11 +296,21 @@
                       updateForm(resource);
                   },
                   error: function (jqXHR, textStatus, errorThrown) {
-                      var message = 'Update failed.\n' + jqXHR.status + ' ' + jqXHR.statusText + '.\n';
-                      $('#searsia-debug-result').html(message);
+                      var message = 'Update failed.\n' + jqXHR.status + ' ' + jqXHR.statusText + '.\n',
+                          data = jqXHR.responseJSON,
+                          debug,
+                          error;
+                      if (data != null) {
+                          debug = data.debug;
+                          if (debug != null) { delete data.debug; }
+                          error = data.error;
+                          if (error != null) { error =  message + error; } 
+                      } else {
+                          data = 'No result';
+                      }
+                      $('#searsia-debug-result').html(error);
                       $('#searsia-debug-json').html(JSON.stringify(jqXHR.responseJSON, null, 2));
-                      $('#searsia-debug-result').append(jqXHR.responseText); 
-                      $('#searsia-debug-xml').html(' ');
+                      $('#searsia-debug-xml').text(formatXML(debug));
                       alertMessage('danger', message);
                       resource['error'] = 'Update failed';
                       localSetResource(resource);
@@ -453,6 +463,14 @@
           alertHTML += '<strong>' + header + ': </strong>';
           alertHTML += message + '</div>';
           $('#searsia-alert-top').html(alertHTML);
+      }
+
+      function formatXML(xml) {
+          if (xml != null) {
+              xml = xml.replace(/\s+/g, ' ');
+              xml = xml.replace(/>\s*</g, '>\n<');
+          }
+          return xml;
       }
 
       -->
