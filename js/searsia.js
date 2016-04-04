@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  * 
- * Searsia Client v0.3.0 spaghetti code:
+ * Searsia Client v0.3.1 spaghetti code:
  *   The web page should call getResources(params) 
  *   (using parameters from: searsiaUrlParameters())
  *   see: search.html
@@ -232,6 +232,8 @@ function searsiaUrlParameters() {
         values = parts[i].split("=");
         if (values[0] === 'q') {
             params.q = values[1];
+            params.q = params.q.replace(/%3C.*?%3E/g, '');
+            params.q = params.q.replace(/%3C|%3E/g, '');
             params.q = params.q.replace(/^\++|\++$/g, ''); // no leading and trailing spaces 
         } else if (values[0] === 'r') {
             params.r = values[1];
@@ -248,7 +250,17 @@ function searsiaError(text) {
 
 function printableQuery(query) {
     query = query.replace(/\+/g, ' ');
-    return decodeURIComponent(query);
+    query = decodeURIComponent(query);
+    query = query.replace(/</g, '&lt;');
+    query = query.replace(/>/g, '&gt;');
+    return query;
+}
+
+
+function formQuery(query) {
+    query = printableQuery(query);
+    query = query.replace(/>/g, '&gt;');
+    return query;
 }
 
 
@@ -280,16 +292,21 @@ function restrict(someText, size) { // size must be > 3
 
 
 function highlightTerms(someText, query) {
-    var i, re,
-        terms = query.split(/\++/); // This might not work for all character encodings
-    for (i = 0; i < terms.length; i += 1) {
-        if (terms[i].length < 3) {
-            terms[i] = '\\b' + terms[i] + '\\b';
+    var i, re, terms, max;
+    query = query.replace(/[^0-9A-Za-z]/g, '+');
+    terms = query.split(/\++/); // This might not work for all character encodings
+    max = terms.length;
+    if (max > 10) { max = 10; }
+    for (i = 0; i < max; i += 1) {
+        if (terms[i].length > 0 && terms[i] !== 'b') { // do not match '<b>' again
+            if (terms[i].length < 3) {
+                terms[i] = '\\b' + terms[i] + '\\b';
+            }
+            try {
+                re = new RegExp('(' + terms[i] + ')', "gi");
+                someText = someText.replace(re, '<b>$1</b>');
+            } catch (ignore) { }
         }
-        try {
-            re = new RegExp('(' + terms[i] + ')', "gi");
-            someText = someText.replace(re, '<b>$1</b>');
-        } catch (ignore) { }
     }
     return someText;
 }
@@ -694,6 +711,7 @@ function htmlResource(query, resource) {
         if (resource.urltemplate.indexOf('{q}') > -1) {
             title += ' - ' + printableQuery(query);
         }
+        title = restrict(title, 80);
         result += highlightTerms(title, query) + '</a>';
         if (resource.favicon != null) {
             result += '<img src="' + resource.favicon + '" alt="">';
@@ -814,7 +832,7 @@ function getResults(query, rid, rank, olddata) {
 
 
 function queryResources(query, data) {
-    var rid, hits, olddata, 
+    var rid, hits, olddata,
         oldquery = "",
         i = 0,
         rank = 1,
@@ -832,7 +850,7 @@ function queryResources(query, data) {
                 rank += 1;
             }
         } else if (done[rid] !== 1) {
-            //oldquery = hits[i].query; // disable 'cached' result
+            //oldquery = hits[i].query; // remove comment to enable 'cached' result
             olddata = { hits: [] };
             if (localExistsResource(rid)) {
                 olddata.resource = localGetResource(rid);
@@ -867,6 +885,10 @@ function queryResources(query, data) {
 
 function getResources(params) {
     /*jslint unparam: true*/
+    if (params.q.length > 150) {
+        searsiaError('Query too long.');
+        return;
+    }
     $.ajax({
         url: fillUrlTemplate(API_TEMPLATE, params.q, ''),
         success: function (data) { queryResources(params.q, data); },

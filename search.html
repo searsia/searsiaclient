@@ -83,7 +83,7 @@
         placeIcon({ });
         var params = searsiaUrlParameters();
         if (params.q != '') {
-          fillForm(params.q);
+          fillForm(formQuery(params.q));
           document.title += ": " + printableQuery(params.q);
           getResources(params);
         } else {
