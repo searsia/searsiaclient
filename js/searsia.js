@@ -577,23 +577,39 @@ function removeTooOldResults(data) {
     data.hits = newHits;
 }
 
-
+/*
+ * Returns html sub result, properly length-restricted
+ * max length 220 characters, restricting the size of the
+ * title and description. Title at least 80 characters.
+ */
 function htmlSubResultWeb(query, hit) {
     var title  = hit.title,
         descr  = hit.description,
         url    = hit.url,
         image  = hit.image,
-        maxsnip = 220,
-        result = '';
-    title = restrict(title, 80);
-    maxsnip -= title.length;
+        result = '',
+        tLength = 0,
+        dLength = 0;
+    tLength = title.length;
+    if (descr != null) {
+        dLength = descr.length;
+    }
+    if (tLength + dLength > 220) {
+        tLength = 220 - dLength;
+        if (tLength < 80) { tLength = 80; }
+        title = restrict(title, tLength);
+        tLength = title.length;
+    }
+    if (tLength + dLength > 220) {
+        dLength = 220 - tLength;
+    }
     result += '<div class="sub-result">';
     if (image != null) {
         result += '<a href="' + url + '"><img src="' + image + '"/></a>';
     }
     result += '<p><a href="' + url + '">' + highlightTerms(title, query) + '</a> ';
     if (descr != null) {
-        result += highlightTerms(restrict(descr, maxsnip), query);
+        result += highlightTerms(restrict(descr, dLength), query);
     }
     result += '</p></div>';
     return result;
