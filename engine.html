@@ -225,11 +225,9 @@
             $('head title').append(' ' + params.r);
             var r = localGetResource(params.r); 
             if (r == null) {
-                if (r == null) {
-                    alertMessage('danger', 'Engine "' + params.r + '" does not exist.');
-                } else {
-                    updateForm(r);
-                }
+                alertMessage('danger', 'Engine "' + params.r + '" does not exist.');
+            } else {
+                updateForm(r);
             }
          }
          $('#searsia-alert-bottom').html('');
