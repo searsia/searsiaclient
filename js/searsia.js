@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  * 
- * Searsia Client v0.3.1 spaghetti code:
+ * Searsia Client v0.3.2 spaghetti code:
  *   The web page should call getResources(params) 
  *   (using parameters from: searsiaUrlParameters())
  *   see: search.html
@@ -248,18 +248,31 @@ function searsiaError(text) {
 }
 
 
+function noHTMLattribute(text) {
+    text = text.replace(/&/g, '&amp;');
+    text = text.replace(/\"/g, '&#34;');
+    return text;
+}
+
+
+function noHTMLelement(text) {
+    text = text.replace(/</g, '&lt;');
+    text = text.replace(/>/g, '&gt;');
+    text = text.replace(/&/g, '&amp;');
+    return text;
+}
+
+
 function printableQuery(query) {
     query = query.replace(/\+/g, ' ');
     query = decodeURIComponent(query);
-    query = query.replace(/</g, '&lt;');
-    query = query.replace(/>/g, '&gt;');
-    return query;
+    return noHTMLelement(query);
 }
 
 
 function formQuery(query) {
     query = printableQuery(query);
-    query = query.replace(/>/g, '&gt;');
+    query = query.replace(/&amp;/g, '&');
     return query;
 }
 
@@ -272,7 +285,7 @@ function encodedQuery(text) {
 
 
 function fillForm(query) {
-    $('#searsia-form').find('input').attr('value', printableQuery(query));
+    $('#searsia-form').find('input').attr('value', formQuery(query));
 }
 
 
@@ -515,7 +528,10 @@ function inferMissingData(data, query) {
     for (i = count; i >= 0; i -= 1) {
         hit = data.hits[i];
         if (hit.title == null) {  // everything *must* have a title
+            hit.title = 'title';
             console.log("Warning: result without title");
+        } else {
+            hit.title = noHTMLelement(hit.title);
         }
         hit.score = scoreHit(hit, i, query);
         if (hit.url == null) {
@@ -529,12 +545,19 @@ function inferMissingData(data, query) {
             if (rhost == null || rhost !== getHost(hit.url)) {
                 typeFull = true;
             }
+            hit.url = noHTMLelement(hit.url);
+        }
+        if (hit.description != null) {
+            hit.description = noHTMLelement(hit.description);
         }
         if (hit.image != null) {
-            hit.image = correctUrl(resource.urltemplate, hit.image);
+            hit.image = noHTMLattribute(correctUrl(resource.urltemplate, hit.image));
         }
         if (hit.favicon == null && resource.favicon != null) {
             hit.favicon = resource.favicon;
+        }
+        if (hit.favicon != null) {
+            hit.favicon = noHTMLattribute(hit.favicon);
         }
         if (hit.tags == null || hit.tags.indexOf('small') === -1) {
             typeSmall = false;
