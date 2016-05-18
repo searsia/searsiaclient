@@ -740,16 +740,18 @@ function htmlSubResults(query, data) {
 }
 
 
-function htmlResource(query, resource) {
+function htmlResource(query, resource, printQuery) {
     var url, title,
         result = '<h4>';
     if (resource.urltemplate != null) {
-        url = fillUrlTemplate(resource.urltemplate, query, '');
-        result += '<a href="' + url + '">';
         title = resource.name;
-        if (resource.urltemplate.indexOf('{q}') > -1) {
+        if (printQuery && resource.urltemplate.indexOf('{q}') > -1) {
             title += ' - ' + printableQuery(query);
+            url = fillUrlTemplate(resource.urltemplate, query, '');
+        } else {
+            url = fillUrlTemplate(resource.urltemplate, '', '');
         }
+        result += '<a href="' + url + '">';
         title = restrict(title, 80);
         result += highlightTerms(title, query) + '</a>';
         if (resource.favicon != null) {
@@ -782,7 +784,7 @@ function printSingleResult(query, hit, where) {
 }
 
 
-function printAggregatedResults(query, data, rank) {
+function printAggregatedResults(query, data, rank, printQuery) {
     var result = '',
         count = data.hits.length,
         resource = data.resource;
@@ -795,7 +797,7 @@ function printAggregatedResults(query, data, rank) {
                 result += htmlFullResult(query, data.hits[0]);
             }
         } else {
-            result += htmlResource(query, resource);
+            result += htmlResource(query, resource, printQuery);
             result += htmlSubResults(query, data);
         }
         result += '</div>';
@@ -839,12 +841,12 @@ function printResults(query, data, rank, olddata) {
             nrDisplayed = printNormalResults(query, data, rank);
             addToStore(data, nrDisplayed, count);
         } else {
-            printAggregatedResults(query, data, rank); // TODO: addToStore now happens deep inside printAggregatedResults...
+            printAggregatedResults(query, data, rank, true); // TODO: addToStore now happens deep inside printAggregatedResults...
         }
     } else {
         inferMissingData(olddata, query);
         removeTooOldResults(olddata);
-        printAggregatedResults(query, olddata, rank);
+        printAggregatedResults(query, olddata, rank, false);
     }
     pending -= 1; // global
     if (pending <= 0) {
