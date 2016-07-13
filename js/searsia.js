@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  * 
- * Searsia Client v0.3.2 spaghetti code:
+ * Searsia Client v0.3.3 spaghetti code:
  *   The web page should call getResources(params) 
  *   (using parameters from: searsiaUrlParameters())
  *   see: search.html
@@ -290,9 +290,9 @@ function fillForm(query) {
 
 
 function fillUrlTemplate(template, query, resource) {
-    template = template.replace(/\{q\??\}/, query);
-    template = template.replace(/\{r\??\}/, resource);
-    return template.replace(/\{[A-Za-z]+\?\}/, '');  // remove all optional
+    template = template.replace(/\{q\??\}/g, query);
+    template = template.replace(/\{r\??\}/g, resource);
+    return template.replace(/\{[A-Za-z]+\?\}/g, '');  // remove all optional
 }
 
 
