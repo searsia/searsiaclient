@@ -306,7 +306,7 @@ function restrict(someText, size) { // size must be > 3
 
 function highlightTerms(someText, query) {
     var i, re, terms, max;
-    query = query.replace(/[^0-9A-Za-z]/g, '+');
+    query = query.toLowerCase().replace(/[^0-9a-z]/g, '+');
     terms = query.split(/\++/); // This might not work for all character encodings
     max = terms.length;
     if (max > 10) { max = 10; }
@@ -631,6 +631,9 @@ function htmlSubResultWeb(query, hit) {
         result += '<a href="' + url + '"><img src="' + image + '"/></a>';
     }
     result += '<p><a href="' + url + '">' + highlightTerms(title, query) + '</a> ';
+    if(tLength < 40 && dLength < 40) {
+        result += '<br>';
+    }
     if (descr != null) {
         result += highlightTerms(restrict(descr, dLength), query);
     }
@@ -885,7 +888,7 @@ function queryResources(query, data) {
     while (i < hits.length) {
         rid = hits[i].rid;
         if (rid == null) { // a result that is not from another resource
-            if (data.resource == null || data.resource.rerank == null || scoreHit(hits[i], 0, query) > 0.0) { // TODO: real rearanking
+            if (data.resource == null || data.resource.rerank == null || scoreHit(hits[i], 0, query) > 0.0) { // TODO: real reranking
                 printSingleResult(query, hits[i], rank);
                 nrResults += 1; // global
                 rank += 1;
