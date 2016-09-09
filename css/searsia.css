@@ -157,55 +157,58 @@ body {
 }
 
 .search-result > img {
-  height:56px;
-  max-width:112px;
+  height:4.2em;
+  max-width:8.4em;
+  float:left;
+  margin-right:8px;
+  margin-top:0px;
+  border:1px solid #e0e0e0;
+}
+
+.search-result > a > img {
+  height:4.2em;
+  max-width:8.4em;
   float:left;
   margin-right:8px;
   margin-top:1px;
   border:1px solid #e0e0e0;
 }
 
-.search-result > a > img {
-  height:56px;
-  max-width:112px;
-  float:left;
-  margin-right:8px;
-  margin-top:2px;
-  border:1px solid #e0e0e0;
-}
-
 .sub-result {
   margin-left:3em;
   margin-right:0em;
-  height:70px;
+  height:5.0em;
+  line-height:1.4;
 }
 
 .sub-result img {
-  height:54px;
-  max-width:96px;
+  height:3.9em;
+  max-width:7.2em;
   margin-right:1em;
-  margin-top:4px;
+  margin-top:2px;
   float:left;
   border:1px solid #e0e0e0;
 }
 
 .sub-result > p {
-  height:62px;
+  height:4.2em;
   margin-right:2em;
   text-overflow:ellipsis;
   overflow:hidden; 
   box-sizing:content-box;
   -moz-box-sizing:content-box;
+  line-height:1.4;
 }
 
 .sub-result > div.descr {
-  max-height:40px;
+  max-height:2.8em;
   margin-top:0em;
   margin-bottom:0em;
   text-overflow:ellipsis;
   overflow:hidden;
   box-sizing:content-box;
   -moz-box-sizing:content-box;
+  line-height:1.4;
 }
 
 .sub-result > .descr > a {
@@ -213,7 +216,7 @@ body {
 }
 
 .sub-result > .url {
-  height:20px;
+  height:1.4em;
   margin-top:0em;
   color:gray;
   margin-bottom:16px;
@@ -222,6 +225,7 @@ body {
   box-sizing:content-box;
   position:relative;
   -moz-box-sizing:content-box;
+  line-height:1.4;
 }
 
 .sub-result > .url > a {
@@ -246,21 +250,22 @@ body {
 }
 
 .sub-result-small p {
-  height:20px;
+  height:1.4em;
   margin-right:2em;
   text-overflow:ellipsis;
   overflow:hidden;
   box-sizing:content-box;
   -moz-box-sizing:content-box;
+  line-height:1.4;
 }
 
 .sub-result-small p a {
   text-decoration: underline;
 }
 
-img.sub-image {
-  height:96px;
+.search-result img.sub-image {
+  height:6.6em;
   margin-right:4px;
-  margin-bottom:4px;
-  max-width:192px;
+  margin-bottom:8px;
+  max-width:12.5em;
 }
