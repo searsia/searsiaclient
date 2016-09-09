@@ -264,3 +264,68 @@ img.sub-image {
   margin-bottom:4px;
   max-width:192px;
 }
+
+.twitter-typeahead {
+  width:100%;
+}
+
+.input-group-lg .twitter-typeahead input  {
+  margin-top: 4px;
+  height: 46px;
+  padding: 10px 16px;
+  font-size: 18px;
+  line-height: 1.3333333;
+  border-radius: 6px;
+}
+
+.tt-menu {
+  min-width: 100px;
+  margin-top: 2px;
+  padding: 5px 0;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border: 1px solid rgba(0,0,0,.2);
+  *border-right-width: 2px;
+  *border-bottom-width: 2px;
+  -webkit-border-radius: 6px;
+     -moz-border-radius: 6px;
+          border-radius: 6px;
+  -webkit-box-shadow: 0 5px 10px rgba(0,0,0,.2);
+     -moz-box-shadow: 0 5px 10px rgba(0,0,0,.2);
+          box-shadow: 0 5px 10px rgba(0,0,0,.2);
+  -webkit-background-clip: padding-box;
+     -moz-background-clip: padding;
+          background-clip: padding-box;
+  width:100%;
+}
+
+.tt-suggestion {
+  display: block;
+  padding: 3px 20px;
+}
+
+.tt-suggestion.tt-cursor {
+  color: #fff;
+  background-color: #337ab7;
+}
+
+.tt-suggestion.tt-cursor:hover {
+  color: #f7f7f7;
+  background-color: #286090;
+}
+
+.tt-suggestion.tt-is-under-cursor a {
+  color: #fff;
+}
+
+.tt-suggestion p {
+  margin: 0;
+}
+
+.tt-selectable {
+  cursor: pointer;
+}
+
+.tt-selectable:hover {
+  background-color: #e7e7e7;
+}

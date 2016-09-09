@@ -24,8 +24,8 @@
             <div id="searsia-banner" style="display:none">
             </div>
             <form id="searsia-form" action="search.html">
-             <div class="input-group input-group-lg"> <!-- has-success / btn-success for green or: background-color:#37c871 -->
-               <input id="searsia-input" type="text" name="q" class="form-control" value="" />
+             <div id="searsia-suggestions" class="input-group input-group-lg">
+               <input id="searsia-input" type="text" name="q" class="form-control typeahead" value="" />
                 <span class="input-group-btn">
                   <button class="btn btn-primary" type="submit" value="submit">
                     &nbsp;<span class="glyphicon glyphicon-search" aria-hidden="true"></span>&nbsp;
@@ -46,15 +46,46 @@
     <!-- TODO: http://jqueryui.com/autocomplete/ -->
     <script src="js/jquery.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
+    <script src="js/typeahead.bundle.min.js"></script>
     <script src="js/searsia.js"></script>
     <script> <!--
+      var typeAhead = new Bloodhound({
+        datumTokenizer: Bloodhound.tokenizers.whitespace,
+        queryTokenizer: Bloodhound.tokenizers.whitespace,
+        remote: {
+          url: 'http://circus.ewi.utwente.nl:8088/autocomplete/search?q={q}&f=opensearch',
+          wildcard: '{q}',
+          rateLimitWait: 200,
+          rateLimitBy: 'debounce',
+          cache: true,
+          filter: function(data) {
+            response = data[1]; // work around strange results 'limit' option:
+            if (response.length > 7) { response = response.slice(0,7); }
+            return response;
+          }
+        }
+      });
       $(document).ready(function() {
          placeBanner({ });
          placeIcon({ });
          placeName({ });
          connectToServer();
-         $("#searsia-input").focus();
          $("#searsia-banner").fadeIn();
+         $("#searsia-input").focus();
+         $("#searsia-input").typeahead({
+           minLength: 1,
+           highlight: true,
+           hint: false
+         },
+         {
+           name: 'utwente-autocomplete',
+           source: typeAhead,
+           limit: 20
+         }).on(
+           'typeahead:selected',
+           function(e){ e.target.form.submit(); }
+         );
+         $("#searsia-input").focus();
       });
       -->
     </script>
