@@ -177,22 +177,23 @@ body {
 .sub-result {
   margin-left:3em;
   margin-right:0em;
-  height:5.0em;
+  margin-bottom:0.8em;
+  height:4.2em;
   line-height:1.4;
 }
 
 .sub-result img {
-  height:3.9em;
-  max-width:7.2em;
+  height:3.7em;
+  max-width:6.8em;
   margin-right:1em;
-  margin-top:2px;
+  margin-top:3px;
   float:left;
   border:1px solid #e0e0e0;
 }
 
 .sub-result > p {
-  height:4.2em;
-  margin-right:2em;
+  height:4.17em;
+  margin-right:0.1em;
   text-overflow:ellipsis;
   overflow:hidden; 
   box-sizing:content-box;
@@ -201,7 +202,7 @@ body {
 }
 
 .sub-result > div.descr {
-  max-height:2.8em;
+  max-height:2.78em;
   margin-top:0em;
   margin-bottom:0em;
   text-overflow:ellipsis;
