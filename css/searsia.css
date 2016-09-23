@@ -54,8 +54,9 @@ body {
 
 .searsia-icon img {
   display: block;
-  height: 2.4em;
-  width: 2.4em;
+  height: 2.6em;
+  width: 2.6em;
+  margin-top: 0px;
   margin-left: auto;
   margin-right: 1.5em;
   margin-bottom:3em;
@@ -269,8 +270,11 @@ img.sub-image {
   width:100%;
 }
 
-.input-group-lg .twitter-typeahead input  {
+.input-group .twitter-typeahead input  {
   margin-top: 4px;
+}
+
+.input-group-lg .twitter-typeahead input  {
   height: 46px;
   padding: 10px 16px;
   font-size: 18px;
