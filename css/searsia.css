@@ -180,6 +180,7 @@ body {
   margin-bottom:0.8em;
   height:4.2em;
   line-height:1.4;
+  clear:both;
 }
 
 .sub-result img {
