@@ -20,7 +20,7 @@
  *   Syntax checked with: jslint --eqeq --regexp --todo searsia.js
  */
 
-/*global $, window, document, alert, jQuery, localStorage*/
+/*global $, window, document, alert, jQuery, localStorage, Bloodhound*/
 
 "use strict";
 
@@ -193,6 +193,36 @@ function localAllResoureIds() {
 }
 
 
+function getSuggestions(data) {
+    var response = data[1];
+    if (response.length > 7) { response = response.slice(0, 7); } // work around results 'limit' option
+    return response;
+}
+
+
+function initSuggestion(suggesttemplate) {
+    var typeAhead = new Bloodhound({
+        datumTokenizer: Bloodhound.tokenizers.whitespace,
+        queryTokenizer: Bloodhound.tokenizers.whitespace,
+        remote: {
+            url: suggesttemplate,
+            wildcard: '{q}',
+            rateLimitWait: 200,
+            rateLimitBy: 'debounce',
+            cache: true,
+            filter: getSuggestions
+        }
+    });
+    $("#searsia-input").typeahead(
+        {minLength: 1, highlight: true, hint: false},
+        {name: 'searsia-autocomplete', source: typeAhead, limit: 20 }
+    ).on(
+        'typeahead:selected',
+        function (e) { e.target.form.submit(); }
+    );
+}
+
+
 function storeMother(data) {
     if (data.resource != null && data.resource.id != null) {
         fromMetaStore('id', data.resource.id);
@@ -210,6 +240,7 @@ function placeBanner(data) {
     banner = fromMetaStore('banner', banner);
     if (banner != null && $('#searsia-banner').length) {
         $('#searsia-banner').html('<img src="' + banner + '" alt="" />');
+        $("#searsia-banner").fadeIn();
     }
 }
 
@@ -235,6 +266,18 @@ function placeIcon(data) {
     if (icon != null) {
         $('#favicon').attr('href', icon);
         $('div.searsia-icon img').attr('src', icon);
+    }
+}
+
+
+function placeSuggestions(data) {
+    var suggesttemplate = null;
+    if (data.resource != null) {
+        suggesttemplate = data.resource.suggesttemplate;
+    }
+    suggesttemplate = fromMetaStore('suggesttemplate', suggesttemplate);
+    if (suggesttemplate != null) {
+        initSuggestion(suggesttemplate);
     }
 }
 
@@ -986,6 +1029,7 @@ function queryResources(query, data) {
     if (pending < 1) {
         checkEmpty();
     }
+    placeSuggestions(data);
 }
 
 
@@ -1042,7 +1086,9 @@ function initSearsiaClient(data) {
     placeBanner(data);
     placeIcon(data);
     placeName(data);
+    placeSuggestions(data);
     storeResources(data);
+    $("#searsia-input").focus();
 }
 
 
