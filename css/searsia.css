@@ -278,6 +278,7 @@ body {
 }
 
 .input-group .twitter-typeahead input  {
+  height: 34px;
   margin-top: 4px;
 }
 

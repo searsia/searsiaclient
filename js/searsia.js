@@ -40,10 +40,13 @@ var lang      = document.getElementsByTagName('html')[0].getAttribute('lang');  
 // but 'http://localhost:3000/searsia/clicklogger.php is also possible
 // IMPORTANT: if the former method is used, the url must be in the same
 // domain as the index page to prevent cross site scripting problems!
-var logClickDataUrl = undefined;
+var logClickDataUrl = 0;
 var sendSessionIdentifier = 0; // send anonymous session id with each click
 
-var store = {
+// Enables suggestions, if they are provided via the API template's server.
+var suggestionsOn = 1;
+
+var searsiaStore = {
 
     hits: [],
     length: 0,
@@ -271,13 +274,15 @@ function placeIcon(data) {
 
 
 function placeSuggestions(data) {
-    var suggesttemplate = null;
-    if (data.resource != null) {
-        suggesttemplate = data.resource.suggesttemplate;
-    }
-    suggesttemplate = fromMetaStore('suggesttemplate', suggesttemplate);
-    if (suggesttemplate != null) {
-        initSuggestion(suggesttemplate);
+    if (suggestionsOn) {
+        var suggesttemplate = null;
+        if (data.resource != null) {
+            suggesttemplate = data.resource.suggesttemplate;
+        }
+        suggesttemplate = fromMetaStore('suggesttemplate', suggesttemplate);
+        if (suggesttemplate != null) {
+            initSuggestion(suggesttemplate);
+        }
     }
 }
 
@@ -542,18 +547,18 @@ function moreResults(event) {
     var i, hit, maxi, query,
         result = '';
     event.preventDefault();
-    maxi = store.length;
-    query = store.getQuery();
+    maxi = searsiaStore.length;
+    query = searsiaStore.getQuery();
     if (maxi > 8) { maxi = 8; }
     for (i = 0; i < maxi; i += 1) {
-        hit = store.shift();
+        hit = searsiaStore.shift();
         result += '<div class="search-result">';
         //TODO add ranking for this result (?)
         result += htmlFullResult(query, hit, -1);
         result += '</div>';
     }
     $('#searsia-results-4').append(result); // there are three divs for results, 1=top, 2=subtop, 3=rest, 4=more
-    if (store.length <= 0) {
+    if (searsiaStore.length <= 0) {
         $('#searsia-alert-bottom').html(noMoreResultsText());
     }
 }
@@ -562,7 +567,7 @@ function moreResults(event) {
 function checkEmpty() {
     if (nrResults === 0) {
         $('#searsia-alert-bottom').html(noResultsText());
-    } else if (store.length <= 0) {
+    } else if (searsiaStore.length <= 0) {
         $('#searsia-alert-bottom').html(noMoreResultsText());
     } else {
         $('#searsia-alert-bottom').html('<a href="#more" id="more-results">' + moreResultsText() + '</a>');
@@ -810,7 +815,7 @@ function addToStore(data, begin, end) {
                 hits[i].description = resource.name;
             }
         }
-        store.push(hits[i]); // global store
+        searsiaStore.push(hits[i]); // global store
     }
 }
 
@@ -912,7 +917,7 @@ function printAggregatedResults(query, data, rank, printQuery) {
         $('#searsia-results-' + rank).append(result); // there are four divs for results, 1=top, 2=subtop, 3=rest, 4=more.
     } else {
         //Remove this resource from the ranking because it is not shown to the user
-        store.removeFromRanking(rank);
+        searsiaStore.removeFromRanking(rank);
     }
 }
 
@@ -988,11 +993,11 @@ function queryResources(query, data) {
         done = [];
     storeMother(data);
     placeIcon(data);
-    store.setQuery(query);
+    searsiaStore.setQuery(query);
     hits = data.hits;
     while (i < hits.length) {
         rid = hits[i].rid;
-        store.addToRanking(rid, rank); // store the ranking of this resource
+        searsiaStore.addToRanking(rid, rank); // store the ranking of this resource
         if (rid == null) { // a result that is not from another resource
             if (data.resource == null || data.resource.rerank == null || scoreHit(hits[i], 0, query) > 0.0) { // TODO: real reranking
                 printSingleResult(query, hits[i], rank);
@@ -1130,6 +1135,8 @@ function getCookie(cname) {
 }
 
 
+/*jslint bitwise: true*/
+
 /**
  * Generates a random identifier compliant with the uuid(v4) spec.
  * The randomness of this number is based on Math.random(), which might not
@@ -1139,10 +1146,11 @@ function getCookie(cname) {
 function generateUUID() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,
         function (c) {
-            var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r&0x3|0x8);
+            var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
             return v.toString(16);
         });
 }
+/*jslint bitwise: false*/
 
 
 /**
@@ -1173,7 +1181,7 @@ function convertUrlForClickThroughData(url, rank, kind) {
         url = encodeURIComponent(url);
         url = logClickDataUrl + '?url=' + url;
 
-        url += '&query=' + store.getQuery();
+        url += '&query=' + searsiaStore.getQuery();
 
         if (rank) {
             url += '&rank=' + rank;
@@ -1184,7 +1192,7 @@ function convertUrlForClickThroughData(url, rank, kind) {
         if (sendSessionIdentifier) {
             url += '&sessionId=' + getOrSetSessionIdentifier();
         }
-        url += '&ordering=' + store.getRanking(rank).toString();
+        url += '&ordering=' + searsiaStore.getRanking(rank).toString();
     }
     return url;
 }
