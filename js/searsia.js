@@ -204,27 +204,29 @@ function getSuggestions(data) {
 
 
 function initSuggestion(suggesttemplate) {
-    var typeAhead = new Bloodhound({
-        datumTokenizer: Bloodhound.tokenizers.whitespace,
-        queryTokenizer: Bloodhound.tokenizers.whitespace,
-        remote: {
-            url: suggesttemplate,
-            wildcard: '{q}',
-            rateLimitWait: 200,
-            rateLimitBy: 'debounce',
-            cache: true,
-            filter: getSuggestions
-        }
-    });
-    $("#searsia-input").typeahead(
-        {minLength: 1, highlight: true, hint: false},
-        {name: 'searsia-autocomplete', source: typeAhead, limit: 20 }
-    ).on(
-        'typeahead:selected',
-        function (e) { e.target.form.submit(); }
-    );
+    var typeAhead;
+    if (suggestionsOn && typeof Bloodhound !== 'undefined') {
+        typeAhead = new Bloodhound({
+            datumTokenizer: Bloodhound.tokenizers.whitespace,
+            queryTokenizer: Bloodhound.tokenizers.whitespace,
+            remote: {
+                url: suggesttemplate,
+                wildcard: '{q}',
+                rateLimitWait: 200,
+                rateLimitBy: 'debounce',
+                cache: true,
+                filter: getSuggestions
+            }
+        });
+        $("#searsia-input").typeahead(
+            {minLength: 1, highlight: true, hint: false},
+            {name: 'searsia-autocomplete', source: typeAhead, limit: 20 }
+        ).on(
+            'typeahead:selected',
+            function (e) { e.target.form.submit(); }
+        );
+    }
 }
-
 
 function storeMother(data) {
     if (data.resource != null && data.resource.id != null) {
@@ -274,15 +276,13 @@ function placeIcon(data) {
 
 
 function placeSuggestions(data) {
-    if (suggestionsOn) {
-        var suggesttemplate = null;
-        if (data.resource != null) {
-            suggesttemplate = data.resource.suggesttemplate;
-        }
-        suggesttemplate = fromMetaStore('suggesttemplate', suggesttemplate);
-        if (suggesttemplate != null) {
-            initSuggestion(suggesttemplate);
-        }
+    var suggesttemplate = null;
+    if (data.resource != null) {
+        suggesttemplate = data.resource.suggesttemplate;
+    }
+    suggesttemplate = fromMetaStore('suggesttemplate', suggesttemplate);
+    if (suggesttemplate != null) {
+        initSuggestion(suggesttemplate);
     }
 }
 
