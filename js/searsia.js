@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  * 
- * Searsia Client v0.4.0 spaghetti code:
+ * Searsia Client v0.4.1 spaghetti code:
  *   The web page should call getResources(params) 
  *   (using parameters from: searsiaUrlParameters())
  *   see: search.html
@@ -310,6 +310,8 @@ function searsiaUrlParameters() {
             params.q = params.q.replace(/^\++|\++$/g, ''); // no leading and trailing spaces 
         } else if (values[0] === 'r') {
             params.r = values[1];
+        } else if (values[0] === 'e') { // extra
+            params.e = values[1];
         }
     }
     return params;
@@ -993,7 +995,6 @@ function queryResources(query, data) {
         done = [];
     storeMother(data);
     placeIcon(data);
-    searsiaStore.setQuery(query);
     hits = data.hits;
     while (i < hits.length) {
         rid = hits[i].rid;
@@ -1044,6 +1045,7 @@ function getResources(params) {
         searsiaError('Query too long.');
         return;
     }
+    searsiaStore.setQuery(params.q);
     $.ajax({
         url: fillUrlTemplate(API_TEMPLATE, params.q, ''),
         success: function (data) { queryResources(params.q, data); },
@@ -1185,6 +1187,7 @@ function convertUrlForClickThroughData(url, rank, kind) {
 
         if (rank) {
             url += '&rank=' + rank;
+            url += '&ordering=' + searsiaStore.getRanking(rank).toString();
         }
         if (kind) {
             url += '&kind=' + kind;
@@ -1192,7 +1195,6 @@ function convertUrlForClickThroughData(url, rank, kind) {
         if (sendSessionIdentifier) {
             url += '&sessionId=' + getOrSetSessionIdentifier();
         }
-        url += '&ordering=' + searsiaStore.getRanking(rank).toString();
     }
     return url;
 }
@@ -1207,11 +1209,17 @@ function convertUrlForClickThroughData(url, rank, kind) {
  * @param kind the kind of link that is clicked on
  */
 function logClick(element, rank, kind) {
+    var url;
     if (logClickDataUrl) {
         //TODO make post call
+        if (element != null) {
+            url = $(element).attr('href');
+        } else {
+            url = 'query';
+        }
         $.ajax({
             type: "GET",
-            url: convertUrlForClickThroughData($(element).attr('href'), rank, kind)
+            url: convertUrlForClickThroughData(url, rank, kind)
         });
     }
 }
