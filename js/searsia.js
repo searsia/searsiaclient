@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Searsia
+ * Copyright 2017 Searsia
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  * 
- * Searsia Client v0.4.1 spaghetti code:
+ * Searsia Client v1.0.0 spaghetti code:
+ *   Set the value of API_TEMPLATE before to your Searsia Server.
+ *
  *   The web page should call getResources(params) 
  *   (using parameters from: searsiaUrlParameters())
  *   see: search.html
@@ -24,8 +26,7 @@
 
 "use strict";
 
-var API_TEMPLATE = 'https://search.utwente.nl/searsia/search?q={q?}&r={r?}';
-//var API_TEMPLATE = 'http://localhost:16842/searsia/search?q={q?}&r={r?}';
+var API_TEMPLATE = '';
 
 
 var AGG       = 1;   // 1=Aggregate results, 0=only boring links
@@ -34,17 +35,9 @@ var nrResults = 0;   // Total number of results returned
 var page      = 1;   // search result page
 var lang      = document.getElementsByTagName('html')[0].getAttribute('lang');    // used for language-dependent texts
 
-// variables for logging click-through data:
-// the url to log click data, undefined or 0 to disable click logging
-// preferably this url is formatted like '/searsia/clicklogger.php'
-// but 'http://localhost:3000/searsia/clicklogger.php is also possible
-// IMPORTANT: if the former method is used, the url must be in the same
-// domain as the index page to prevent cross site scripting problems!
-var logClickDataUrl = 0;
+var logClickDataUrl = 0; // url to log click data, undefined or 0 to disable click logging
 var sendSessionIdentifier = 0; // send anonymous session id with each click
-
-// Enables suggestions, if they are provided via the API template's server.
-var suggestionsOn = 1;
+var suggestionsOn = 1; // Enables suggestions, if they are provided via the API template's server.
 
 var searsiaStore = {
 
@@ -104,16 +97,27 @@ var searsiaStore = {
 };
 
 
-function fromMetaStore(field, value) {
+function clearLocalStorage() {
+    try {
+        window.localStorage.clear();
+    } catch (ignore) { }
+}
+
+
+function setLocalStorage(field, value) {
     if (value != null) {
         try {
             window.localStorage['searsia-' + field] = value;
         } catch (ignore) { }
-    } else {
-        try {
-            value = window.localStorage['searsia-' + field];
-        } catch (ignore) { }
     }
+}
+
+
+function getLocalStorage(field) {
+    var value;
+    try {
+        value = window.localStorage['searsia-' + field];
+    } catch (ignore) { }
     return value;
 }
 
@@ -128,7 +132,7 @@ function supportsHtml5Storage() {
 
 
 function localSetResource(resource) {
-    var id = fromMetaStore('id', null);
+    var id = getLocalStorage('id');
     if (id != null) {
         try {
             window.localStorage[id + '/' + resource.id] = JSON.stringify(resource);
@@ -138,7 +142,7 @@ function localSetResource(resource) {
 
 
 function localGetResource(rid) {
-    var id = fromMetaStore('id', null);
+    var id = getLocalStorage('id');
     if (id == null) {
         return null;
     }
@@ -151,7 +155,7 @@ function localGetResource(rid) {
 
 
 function localExistsResource(rid) {
-    var id = fromMetaStore('id', null);
+    var id = getLocalStorage('id');
     if (id == null) {
         return false;
     }
@@ -164,7 +168,7 @@ function localExistsResource(rid) {
 
 
 function localDeleteResource(rid) {
-    var id = fromMetaStore('id', null);
+    var id = getLocalStorage('id');
     if (id != null) {
         try {
             delete window.localStorage[id + '/' + rid];
@@ -177,7 +181,7 @@ function localAllResoureIds() {
     var i,
         key,
         list = [],
-        id = fromMetaStore('id', null);
+        id = getLocalStorage('id');
     if (id == null) {
         return [];
     }
@@ -228,9 +232,10 @@ function initSuggestion(suggesttemplate) {
     }
 }
 
+
 function storeMother(data) {
     if (data.resource != null && data.resource.id != null) {
-        fromMetaStore('id', data.resource.id);
+        setLocalStorage('id', data.resource.id);
         data.resource.type = 'mother';
         localSetResource(data.resource);
     }
@@ -239,10 +244,12 @@ function storeMother(data) {
 
 function placeBanner(data) {
     var banner = null;
-    if (data.resource != null) {
+    if (data.resource != null && data.resource.banner != null) {
         banner = data.resource.banner;
+        setLocalStorage('banner', banner);
+    } else {
+        banner = getLocalStorage('banner');
     }
-    banner = fromMetaStore('banner', banner);
     if (banner != null && $('#searsia-banner').length) {
         $('#searsia-banner').html('<img src="' + banner + '" alt="" />');
         $("#searsia-banner").fadeIn();
@@ -254,8 +261,10 @@ function placeName(data) {
     var name = null;
     if (data.resource != null) {
         name = data.resource.name;
+        setLocalStorage('name', name);
+    } else {
+        name = getLocalStorage('name');
     }
-    name = fromMetaStore('name', name);
     if (name != null) {
         $('head title').html(name + ' - Search');
     }
@@ -266,11 +275,27 @@ function placeIcon(data) {
     var icon = null;
     if (data.resource != null) {
         icon = data.resource.favicon;
+        setLocalStorage('icon', icon);
+    } else {
+        icon = getLocalStorage('icon');
     }
-    icon = fromMetaStore('icon', icon);
     if (icon != null) {
         $('#favicon').attr('href', icon);
         $('div.searsia-icon img').attr('src', icon);
+    }
+}
+
+
+function initClient() {
+    var originalTemplate = getLocalStorage('originaltemplate');
+    if (API_TEMPLATE !== originalTemplate) {
+        clearLocalStorage();
+        setLocalStorage('originaltemplate', API_TEMPLATE);
+    } else {
+        placeBanner({ });
+        placeIcon({ });
+        placeName({ });
+        $("#searsia-input").focus();
     }
 }
 
@@ -279,8 +304,10 @@ function placeSuggestions(data) {
     var suggesttemplate = null;
     if (data.resource != null) {
         suggesttemplate = data.resource.suggesttemplate;
+        setLocalStorage('suggesttemplate', suggesttemplate);
+    } else {
+        suggesttemplate = getLocalStorage('suggesttemplate');
     }
-    suggesttemplate = fromMetaStore('suggesttemplate', suggesttemplate);
     if (suggesttemplate != null) {
         initSuggestion(suggesttemplate);
     }
@@ -364,9 +391,16 @@ function fillForm(query) {
 }
 
 
-function fillUrlTemplate(template, query, resource) {
+function fillUrlTemplate(template, query, resourceId) {
+    var last, myId;
+    if (resourceId) {
+        myId = getLocalStorage('id');
+        last = template.lastIndexOf(myId);
+        if (last >= 0) {
+            template = template.substring(0, last) + resourceId + template.substring(last + myId.length, template.length);
+        }
+    }
     template = template.replace(/\{q\??\}/g, query);
-    template = template.replace(/\{r\??\}/g, resource);
     return template.replace(/\{[A-Za-z]+\?\}/g, '');  // remove all optional
 }
 
@@ -1138,7 +1172,6 @@ function getCookie(cname) {
 
 
 /*jslint bitwise: true*/
-
 /**
  * Generates a random identifier compliant with the uuid(v4) spec.
  * The randomness of this number is based on Math.random(), which might not
@@ -1230,7 +1263,13 @@ function connectToServer() {
     $.ajax({
         url: fillUrlTemplate(API_TEMPLATE, '', ''),
         success: function (data) { initSearsiaClient(data); },
-        error: function (xhr, options, error) { searsiaError('Cannot connect to search server.'); },
+        error: function (xhr, options, error) {
+            if (API_TEMPLATE) {
+                searsiaError('Temporarily no connection possible. Please try again later.');
+            } else {
+                searsiaError('If you see this then searsiaclient needs to be configured. Please set the value of API_TEMPLATE in searsia.js.');
+            }
+        },
         timeout: 10000,
         dataType: 'json'
     });

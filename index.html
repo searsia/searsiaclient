@@ -48,16 +48,12 @@
     <script src="js/typeahead.bundle.min.js"></script>
     <script src="js/searsia.js"></script>
     <script> <!--
-      $(document).ready(function() {
-         placeBanner({ });
-         placeIcon({ });
-         placeName({ });
-         $("#searsia-input").focus();
-         connectToServer();
+      $(document).ready(function () {
+        initClient();
+        connectToServer();
       });
       -->
     </script>
-
   </body>
 </html>
 

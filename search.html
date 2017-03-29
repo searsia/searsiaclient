@@ -80,8 +80,7 @@
     <script src="js/searsia.js"></script>
     <script> <!--
       $(document).ready(function(){
-        placeName({ });
-        placeIcon({ });
+        initClient();
         var params = searsiaUrlParameters();
         if (params.q != '') {
           fillForm(formQuery(params.q));
