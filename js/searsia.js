@@ -32,11 +32,10 @@ var API_TEMPLATE = '';
 var AGG       = 1;   // 1=Aggregate results, 0=only boring links
 var pending   = 0;   // Number of search engines that are answering a query
 var nrResults = 0;   // Total number of results returned 
-var page      = 1;   // search result page
 var lang      = document.getElementsByTagName('html')[0].getAttribute('lang');    // used for language-dependent texts
 
 var logClickDataUrl = 0; // url to log click data, undefined or 0 to disable click logging
-var sendSessionIdentifier = 0; // send anonymous session id with each click
+var sendSessionIdentifier = 0; // do not send anonymous session id with each click
 var suggestionsOn = 1; // Enables suggestions, if they are provided via the API template's server.
 
 var searsiaStore = {
@@ -92,6 +91,13 @@ var searsiaStore = {
             return this.ranking.splice(0, rank);
         }
         return this.ranking;
+    },
+
+    clear: function () {
+        this.length = 0;
+        this.hits = [];
+        this.query = '';
+        this.ranking = [];
     }
 
 };
@@ -257,6 +263,16 @@ function placeBanner(data) {
 }
 
 
+function placeQuery(query) {
+    var i, title = document.title;
+    i = title.indexOf(':');
+    if (i != -1) {
+        title = title.substring(0, i);
+    }
+    document.title = title + ': ' + query;
+}
+
+
 function placeName(data) {
     var name = null;
     if (data.resource != null) {
@@ -345,6 +361,17 @@ function searsiaUrlParameters() {
 }
 
 
+function searsiaCleanSheet() {
+    searsiaStore.clear();
+    $('#searsia-alert-top').empty();
+    $('#searsia-results-1').empty();
+    $('#searsia-results-2').empty();
+    $('#searsia-results-3').empty();
+    $('#searsia-results-4').empty();
+    $('#searsia-alert-bottom').empty();
+}
+
+
 function searsiaError(text) {
     $('#searsia-alert-bottom').html(text);
 }
@@ -406,8 +433,38 @@ function fillUrlTemplate(template, query, resourceId) {
 
 
 function restrict(someText, size) { // size must be > 3
+    var i;
     if (someText != null && someText.length > size) {
-        someText = someText.substr(0, size - 3) + '...';
+        i = someText.lastIndexOf(" ", size);
+        if (i == -1) { i = size - 3; }
+        someText = someText.substr(0, i) + ' ...';
+    }
+    return someText;
+}
+
+
+function restrictStart(someText, start, size) { // size must be > 3
+    var i, j,
+        prefix = "",
+        postfix = "";
+    if (someText != null && someText.length > size) {
+        if (start < 0) { start = 0; }
+        if (start > 2) {
+            i = someText.indexOf(" ", start - 1);
+            if (i == -1) { i = start; } else { i += 1; }
+            prefix = "... ";
+        } else {
+            i = 0;
+        }
+        if (start + size < someText.length) {
+            j = someText.lastIndexOf(" ", start + size);
+            if (j == -1) { j = start + size - 3; }
+            postfix = ' ...';
+        } else {
+            j = start + size;
+        }
+        someText = prefix + someText.substr(i, j - i) + postfix;
+
     }
     return someText;
 }
@@ -435,26 +492,25 @@ function highlightTerms(someText, query) {
 
 
 function normalizeText(text) {
-    return text.toLowerCase().replace(new RegExp('[^a-z0-9]', 'g'), ' ');
+    return text.toLowerCase().replace(new RegExp('[^a-z0-9]+', 'g'), ' ').replace(new RegExp('^ +| +$', 'g'), '');
 }
 
 
-function scoreText(text, query) {
+function scoreText(text, queryTerms) {
     var i, j, len,
-        queryTerms,
         textTerms,
         score = 0.0;
-    query = normalizeText(printableQuery(query));
-    queryTerms = query.split(/ +/); // TODO: This might not work for all character encodings
     textTerms = normalizeText(text).split(/ +/);
     for (i = 0; i < queryTerms.length; i += 1) { // TODO: Really? Nested loop??
         len = textTerms.length;
-        if (len > 45) { len = 45; } // Only check first 45 words
-        for (j = 0; j < len; j += 1) {
+        if (len > 1000) { len = 1000; } // Only check first 1000 words
+        j = 0;
+        while (j < len) {
             if (queryTerms[i] === textTerms[j]) {
                 score += 1.0;
-                break; // one occurrence per query term
+                j = len; // one occurrence per query term
             }
+            j += 1;
         }
     }
     return score;
@@ -463,18 +519,121 @@ function scoreText(text, query) {
 
 function scoreHit(hit, i, query) {
     var score = 0,
-        text;
+        text,
+        queryTerms;
+    query = normalizeText(printableQuery(query));
+    queryTerms = query.split(/ +/); // TODO: This might not work for all character encodings
     if (hit.description != null) {
         text = hit.title + ' ' + hit.description;
     } else {
         text = hit.title;
     }
     if (text != null) {
-        score = scoreText(text, query);
+        if (text.length > 300) { text = text.substring(0, 300); }
+        score = scoreText(text, queryTerms);
     }
     return score - (i / 10);
 }
 
+
+function addToHits(hits, hit) {
+    var i, newIndex = hits.length,
+        TOP = 100;
+    if (newIndex < TOP || hit.score > hits[TOP - 1].score) {
+        if (newIndex < TOP) { newIndex += 1; }
+        i = newIndex - 1;
+        while (i > 0 && hits[i - 1].score < hit.score) {
+            hits[i] = hits[i - 1];
+            i -= 1;
+        }
+        hits[i] = hit;
+    }
+}
+
+
+function matchingSnippets(hits, queryTerms) { // TODO for queries length > 2
+    var i, j, k, description, first, second;
+    for (i = 0; i < hits.length; i += 1) {
+        first = -1;
+        second = -1;
+        if (queryTerms.length < 2) { first = 0; } // Take first part of description for query length 1
+        if (hits[i].description != null) {
+            description = hits[i].description.toLowerCase();
+            j = 0;
+            while (j < queryTerms.length) {
+                if (first == -1) {
+                    first = description.indexOf(queryTerms[j]);
+                } else if (second == -1) {
+                    k = first - 120;
+                    if (k < 0) { k = 0; }
+                    second = description.indexOf(queryTerms[j], k);
+                    if (second == -1) {
+                        second = description.indexOf(queryTerms[j]);
+                    }
+                }
+                j += 1;
+            }
+            if (first == -1) { first = 0; }
+            if (second == -1) { second = 0; }
+            if (first > second) {
+                k = first;
+                first = second;
+                second = k;
+            }
+            if (second - first < 120) {
+                description = restrictStart(hits[i].description, first - 40, 192);
+            } else {
+                description =  restrictStart(hits[i].description, first - 40, 92);
+                description += restrictStart(hits[i].description, second - 40, 92);
+            }
+            hits[i].description = description;
+        }
+    }
+}
+
+
+/**
+ *  Reranks hits, and select those that match the query
+ *  only used if mother has "rerank"
+ */
+function scoreAllHits(data, query) {
+    var queryTerms, queryLen, hit, score, tscore,
+        newHits = [],
+        nrOfTopHits = 0,
+        i = 0;
+    query = normalizeText(printableQuery(query));
+    queryTerms = query.split(/ +/).sort(function (a, b) {return b.length - a.length; }); // TODO: Split might not work for all character encodings
+    queryLen = queryTerms.length;
+    newHits = [];
+    while (i < data.hits.length) {
+        hit = data.hits[i];
+        score = 0;
+        tscore = 0;
+        if (hit.title != null) {
+            tscore = scoreText(hit.title, queryTerms);
+        }
+        if (tscore == 0 && hit.url != null) {
+            tscore = scoreText(hit.url, queryTerms) / 1.1;
+        }
+        if (tscore < queryLen && hit.description != null) {
+            score = scoreText(hit.description, queryTerms);
+        }
+        if (tscore * 1.1 > score) { // title boost
+            score = tscore * 1.1;
+        } else {
+            score += tscore / 10;
+        }
+        if (score > 0) {
+            if (score >= queryLen) { nrOfTopHits += 1; }
+            hit.score = score;
+            addToHits(newHits, hit);
+        }
+        if (nrOfTopHits >= 100) { break; }
+        i += 1;
+    }
+    matchingSnippets(newHits, queryTerms);
+    data.hits = newHits;
+}
 
 /**
  * creates the onclick function for click log data, which can be inserted
@@ -668,7 +827,7 @@ function inferMissingData(data, query) {
         } else {
             hit.title = noHTMLelement(hit.title);
         }
-        hit.score = scoreHit(hit, i, query);
+        hit.score = scoreHit(hit, i, query); // TODO: more costly now!
         if (hit.url == null) {
             if (resource.urltemplate != null) {
                 hit.url = fillUrlTemplate(resource.urltemplate, encodedQuery(hit.title), '');
@@ -1029,16 +1188,20 @@ function queryResources(query, data) {
         done = [];
     storeMother(data);
     placeIcon(data);
+    if (data.resource != null && data.resource.rerank != null) {
+        scoreAllHits(data, query);
+    }
     hits = data.hits;
     while (i < hits.length) {
         rid = hits[i].rid;
         searsiaStore.addToRanking(rid, rank); // store the ranking of this resource
         if (rid == null) { // a result that is not from another resource
-            if (data.resource == null || data.resource.rerank == null || scoreHit(hits[i], 0, query) > 0.0) { // TODO: real reranking
-                printSingleResult(query, hits[i], rank);
-                nrResults += 1; // global
-                rank += 1;
+            if (data.resource != null && data.resource.urltemplate != null) {
+                hits[i].url = correctUrl(data.resource.urltemplate, hits[i].url);
             }
+            printSingleResult(query, hits[i], rank);
+            nrResults += 1; // global
+            rank += 1;
         } else if (done[rid] !== 1) {
             //oldquery = hits[i].query; // remove comment to enable 'cached' result
             olddata = { hits: [] };
