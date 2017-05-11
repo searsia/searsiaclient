@@ -1189,9 +1189,16 @@ function printNormalResults(query, data, rank) {
 
 function printResults(query, data, rank, olddata) {
     var nrDisplayed,
+        printQuery = true,
         count = data.hits.length; // TODO: also includes 'rid'-only results from searsia engines
     if (data.resource != null && data.resource.apitemplate != null) {
         localSetResource(data.resource);
+    }
+    if (count === 0) {
+        removeTooOldResults(olddata);
+        data = olddata;
+        printQuery = false;
+        count = data.hits.length;
     }
     if (count > 0) {
         inferMissingData(data, query);
@@ -1204,12 +1211,8 @@ function printResults(query, data, rank, olddata) {
         } else if (data.resource != null && data.resource.type != null && data.resource.type.indexOf('advertisement') !== -1) {
             printAdvertisements(query, data, rank);
         } else {
-            printAggregatedResults(query, data, rank, true); // TODO: addToStore now happens deep inside printAggregatedResults...
+            printAggregatedResults(query, data, rank, printQuery); // TODO: addToStore now happens deep inside printAggregatedResults...
         }
-    } else {
-        inferMissingData(olddata, query);
-        removeTooOldResults(olddata);
-        printAggregatedResults(query, olddata, rank, false);
     }
     pending -= 1; // global
     if (pending <= 0) {
