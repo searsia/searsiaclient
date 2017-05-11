@@ -22,6 +22,7 @@
  *   Syntax checked with: jslint --eqeq --regexp --todo searsia.js
  */
 
+/* jshint esversion: 5 */
 /*global $, window, document, alert, jQuery, localStorage, Bloodhound*/
 
 "use strict";
@@ -810,14 +811,13 @@ function inferMissingData(data, query) {
         typeImages = true,
         typeSmall = true,
         typeFull = false,
+        typeTitleOnly = true,
+        typeAdvertisement = false,
         count = data.hits.length - 1;
 
     resource = data.resource;
     if (resource.urltemplate != null) {
         rhost = getHost(resource.urltemplate);
-        if (resource.favicon == null) {
-            resource.favicon = correctUrl(resource.urltemplate, '/favicon.ico');
-        }
     }
     for (i = count; i >= 0; i -= 1) {
         hit = data.hits[i];
@@ -843,9 +843,11 @@ function inferMissingData(data, query) {
         }
         if (hit.description != null) {
             hit.description = noHTMLelement(hit.description);
+            typeTitleOnly = false;
         }
         if (hit.image != null) {
             hit.image = noHTMLattribute(correctUrl(resource.urltemplate, hit.image));
+            typeTitleOnly = false;
         }
         if (hit.favicon == null && resource.favicon != null) {
             hit.favicon = resource.favicon;
@@ -859,17 +861,22 @@ function inferMissingData(data, query) {
         if (hit.tags == null || hit.tags.indexOf('image') === -1) {
             typeImages = false;
         }
+        if (hit.tags != null && hit.tags.indexOf('advertisement') !== -1) {
+            typeAdvertisement = true;
+        }
         if (i < count && data.hits[i + 1].score > hit.score) {
             data.hits[i] = data.hits[i + 1]; // bubbling the best scoring hit up
             data.hits[i + 1] = hit;
         }
     }
-    if (typeSmall) {
+    if (typeSmall || typeTitleOnly) {
         resource.type = 'small';
     } else if (typeImages) {
         resource.type = 'images';
     } else if (typeFull) {
         resource.type = 'full';
+    } else if (typeAdvertisement) {
+        resource.type = 'advertisement';  // TODO: resources with mix of ads and web
     } else {
         resource.type = 'web';
     }
@@ -1117,6 +1124,45 @@ function printAggregatedResults(query, data, rank, printQuery) {
 }
 
 
+function printAdvertisements(query, data, rank) {
+    var i, result = '',
+        count = data.hits.length;
+    if (count > 0) {
+        if (rank < 4) {
+            count = 1;
+        } else if ($('#searsia-results-1').is(':empty') || $('#searsia-results-2').is(':empty')) {
+            count = 1;
+            if ($('#searsia-results-3').is(':empty')) {
+                rank = 3;
+            }
+        } else if (count > 3) {
+            count = 3;
+        }
+        result += '<div class="panel panel-default"><div class="panel-heading">- advertisements';
+        if (data.resource != null && data.resource.name != null) {
+            result += ' by ' + data.resource.name;
+        }
+        result += ' -</div><div class="panel-body">';
+        for (i = 0; i < count; i += 1) {
+            result += '<div class="search-result">';
+            result += htmlFullResult(query, data.hits[i], rank);
+            result += '</div>';
+        }
+        result += '</div>';
+        if (rank < 4) {
+            $('#searsia-results-' + rank).append(result);
+        } else if ($('#searsia-sidebar-1').is(':empty')) {
+            $('#searsia-sidebar-1').append(result);
+        } else {
+            $('#searsia-sidebar-2').append(result);
+        }
+    } else {
+        //Remove this resource from the ranking because it is not shown to the user
+        searsiaStore.removeFromRanking(rank);
+    }
+}
+
+
 function printNormalResults(query, data, rank) {
     var result, i, where,
         MAXX = 4,
@@ -1149,6 +1195,8 @@ function printResults(query, data, rank, olddata) {
         if (AGG === 0 || data.resource.name == null) {
             nrDisplayed = printNormalResults(query, data, rank);
             addToStore(data, nrDisplayed, count);
+        } else if (data.resource != null && data.resource.type != null && data.resource.type.indexOf('advertisement') !== -1) {
+            printAdvertisements(query, data, rank);
         } else {
             printAggregatedResults(query, data, rank, true); // TODO: addToStore now happens deep inside printAggregatedResults...
         }

@@ -6,6 +6,14 @@ body {
   margin: 2em 1em;
 }
 
+.theme-search .panel {
+  margin-bottom:40px;
+}
+
+.theme-search .panel .panel-heading {
+  text-align:center;
+}
+
 .theme-search > p > .btn {
   margin: 5px 0;
 } 
@@ -117,6 +125,10 @@ body {
     height:auto;
     margin: 0.5em 0 0.5em 0;
     opacity:0.3;
+}
+
+.panel .search-result:last-child {
+    margin-bottom:8px;
 }
 
 .search-result {
