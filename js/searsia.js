@@ -1115,6 +1115,7 @@ function printAggregatedResults(query, data, rank, printQuery) {
         }
         result += '</div>';
         if (rank < 1) { rank = 1; }
+        if (rank === 4) { rank = 3; }
         if (rank > 4) { rank = 4; }
         $('#searsia-results-' + rank).append(result); // there are four divs for results, 1=top, 2=subtop, 3=rest, 4=more.
     } else {
@@ -1130,10 +1131,13 @@ function printAdvertisements(query, data, rank) {
     if (count > 0) {
         if (rank < 4) {
             count = 1;
-        } else if ($('#searsia-results-1').is(':empty') || $('#searsia-results-2').is(':empty')) {
-            count = 1;
-            if ($('#searsia-results-3').is(':empty')) {
-                rank = 3;
+        } else if ($('#searsia-results-1').is(':empty')) {
+            count = 2;
+            if ($('#searsia-results-2').is(':empty')) {
+                count = 1;
+                if ($('#searsia-results-3').is(':empty')) {
+                    rank = 3;
+                }
             }
         } else if (count > 3) {
             count = 3;
@@ -1149,6 +1153,7 @@ function printAdvertisements(query, data, rank) {
             result += '</div>';
         }
         result += '</div>';
+        if (rank < 1) { rank = 1; }
         if (rank < 4) {
             $('#searsia-results-' + rank).append(result);
         } else if ($('#searsia-sidebar-1').is(':empty')) {
@@ -1174,6 +1179,7 @@ function printNormalResults(query, data, rank) {
         result += '</div>';
         where = rank + i;
         if (where < 1) { where = 1; }
+        if (where === 4) { where = 3; }
         if (where > 4) { where = 4; }
         $('#searsia-results-' + where).append(result); // there are four divs for results, 1=top, 2=subtop, 3=rest, 4=more.
     }
