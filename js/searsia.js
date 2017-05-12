@@ -27,7 +27,7 @@
 
 "use strict";
 
-var API_TEMPLATE = 'http://daminatila.com:8080/searsia/index.json?q={q}';
+var API_TEMPLATE = '';
 
 
 var AGG       = 1;   // 1=Aggregate results, 0=only boring links
