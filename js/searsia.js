@@ -1108,21 +1108,26 @@ function printAggregatedResults(query, data, rank, printQuery) {
 
 
 function printAdvertisements(query, data, rank) {
-    var i, result = '',
+    var i, j, filled, result = '',
         count = data.hits.length;
     if (count > 0) {
         if (rank < 4) {
             count = 1;
-        } else if ($('#searsia-results-1').is(':empty')) {
-            count = 2;
-            if ($('#searsia-results-2').is(':empty')) {
-                count = 1;
-                if ($('#searsia-results-3').is(':empty')) {
+        } else {
+            if (count > 3) { count = 3; }
+            filled = 0;
+            for (j = 1; j < 4; j += 1) {
+                if (!$('#searsia-results-' + j).is(':empty')) {
+                    filled += 1;
+                }
+            }
+            if (count > filled) {
+                count = filled;
+                if (count === 0) {
+                    count = 1;
                     rank = 3;
                 }
             }
-        } else if (count > 3) {
-            count = 3;
         }
         result += '<div class="panel panel-default"><div class="panel-heading">advertisements';
         if (data.resource != null && data.resource.name != null) {
