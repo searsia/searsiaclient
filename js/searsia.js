@@ -27,7 +27,7 @@
 
 "use strict";
 
-var API_TEMPLATE = '';
+var API_TEMPLATE = 'http://daminatila.com:8080/searsia/index.json?q={q}';
 
 
 var AGG       = 1;   // 1=Aggregate results, 0=only boring links
@@ -869,37 +869,19 @@ function inferMissingData(data, query) {
             data.hits[i + 1] = hit;
         }
     }
-    if (typeSmall || typeTitleOnly) {
-        resource.type = 'small';
+    if (typeAdvertisement) {
+        resource.type = 'advertisement'; // TODO: resourc with mix of ads & web
     } else if (typeImages) {
         resource.type = 'images';
+    } else if (typeSmall || typeTitleOnly) {
+        resource.type = 'small';
     } else if (typeFull) {
         resource.type = 'full';
-    } else if (typeAdvertisement) {
-        resource.type = 'advertisement';  // TODO: resources with mix of ads and web
     } else {
         resource.type = 'web';
     }
 }
 
-
-/*
- * Updates data.hits, removing hits that have a 
- * foundBefore date that is more than 2 weeks ago.
- */
-function removeTooOldResults(data) {
-    var i, hit,
-        newHits = [],
-        count = data.hits.length;
-    if (count > 15) { count = 15; }
-    for (i = 0; i < count; i += 1) {
-        hit = data.hits[i];
-        if (hit.foundBefore == null || Date.now() - new Date(hit.foundBefore).getTime() < 1209600000) { // 1209600000 is two weeks in miliseconds
-            newHits.push(hit);
-        }
-    }
-    data.hits = newHits;
-}
 
 /*
  * Returns html sub result, properly length-restricted
@@ -1142,11 +1124,11 @@ function printAdvertisements(query, data, rank) {
         } else if (count > 3) {
             count = 3;
         }
-        result += '<div class="panel panel-default"><div class="panel-heading">- advertisements';
+        result += '<div class="panel panel-default"><div class="panel-heading">advertisements';
         if (data.resource != null && data.resource.name != null) {
             result += ' by ' + data.resource.name;
         }
-        result += ' -</div><div class="panel-body">';
+        result += ' </div><div class="panel-body">';
         for (i = 0; i < count; i += 1) {
             result += '<div class="search-result">';
             result += htmlFullResult(query, data.hits[i], rank);
@@ -1195,7 +1177,6 @@ function printResults(query, data, rank, olddata) {
         localSetResource(data.resource);
     }
     if (count === 0) {
-        removeTooOldResults(olddata);
         data = olddata;
         printQuery = false;
         count = data.hits.length;
@@ -1205,11 +1186,11 @@ function printResults(query, data, rank, olddata) {
         $('#searsia-alert-bottom').html('');
         if (count > 15) { count = 15; } // no more than 15 per resource
         nrResults += count; // global
-        if (AGG === 0 || data.resource.name == null) {
+        if (data.resource != null && data.resource.type != null && data.resource.type === 'advertisement') {
+            printAdvertisements(query, data, rank);
+        } else if (AGG === 0 || data.resource.name == null) {
             nrDisplayed = printNormalResults(query, data, rank);
             addToStore(data, nrDisplayed, count);
-        } else if (data.resource != null && data.resource.type != null && data.resource.type.indexOf('advertisement') !== -1) {
-            printAdvertisements(query, data, rank);
         } else {
             printAggregatedResults(query, data, rank, printQuery); // TODO: addToStore now happens deep inside printAggregatedResults...
         }
@@ -1239,7 +1220,6 @@ function getResults(query, rid, rank, olddata) {
 
 function queryResources(query, data) {
     var rid, hits, olddata,
-        oldquery = "",
         i = 0,
         rank = 1,
         done = [];
@@ -1260,13 +1240,13 @@ function queryResources(query, data) {
             nrResults += 1; // global
             rank += 1;
         } else if (done[rid] !== 1) {
-            //oldquery = hits[i].query; // remove comment to enable 'cached' result
             olddata = { hits: [] };
             if (localExistsResource(rid)) {
                 olddata.resource = localGetResource(rid);
                 while (i < hits.length && hits[i].rid === rid) {
                     if (hits[i].title != null && hits[i].title != "" && // too many exceptions?
-                            (hits[i].url != null || olddata.resource.urltemplate != null)) {
+                            (hits[i].url != null || olddata.resource.urltemplate != null) &&
+                            (hits[i].foundBefore == null || Date.now() - new Date(hits[i].foundBefore).getTime() < 1209600000)) { // 1209600000 is 2 weeks in ms
                         olddata.hits.push(hits[i]);
                     }
                     i += 1;
@@ -1275,12 +1255,11 @@ function queryResources(query, data) {
             } else {
                 olddata.resource = { id: rid }; // TODO: get it?
             }
-            if (oldquery === query && localExistsResource(rid) && olddata.hits.length > 0) {  // a 'cached' result.
-                printResults(query, olddata, rank, olddata);
-            } else {                         // some result, but not the best
-                getResults(query, rid, rank, olddata);
-                pending += 1; // global
+            if (olddata.hits.length > 0 && rank < 4) {
+                $('#searsia-results-' + rank).append(" "); // We know this will be filled (for checks in printAdvertisements)
             }
+            getResults(query, rid, rank, olddata);
+            pending += 1; // global
             done[rid] = 1;
             rank += 1;
         }
