@@ -1276,16 +1276,61 @@ function queryResources(query, data) {
     placeSuggestions(data);
 }
 
+/**
+ *  fill Template, allowing for instance "!duckduckgo test"
+ *  where 'duckduckgo' is the resource identifier
+ *  returns url, changes params.q
+ *  TODOOOO: @bang only works from main page
+ *           bangs do not work when resource not in localStorage
+ */
+function fillTemplateCheckBangs(template, params) {
+    var query = params.q,
+        bangQuery = "",
+        bangRid = "",
+        bangUrl = null,
+        resource,
+        i,
+        terms;
+    terms = query.split(/\++/); // This might not work for all char encodings
+    for (i = 0; i < terms.length; i += 1) {
+        if (terms[i].startsWith('%21') || terms[i].startsWith('%40')) {
+            bangRid = terms[i].substring(3, terms[i].length).toLowerCase();
+            resource = localGetResource(bangRid);
+            if (resource) {
+                if (terms[i].startsWith('%21')) {
+                    bangUrl = resource.urltemplate;
+                }
+            } else {
+                bangRid = '';
+            }
+        } else {
+            if (bangQuery) { bangQuery += "+"; }
+            bangQuery += terms[i];
+        }
+    }
+    if (bangUrl) {
+        bangUrl = fillUrlTemplate(bangUrl, bangQuery, '');
+        window.location.replace(bangUrl);
+        return fillUrlTemplate(template, '', '');
+    }
+    if (bangRid) {
+        params.q = bangQuery;
+    }
+    return fillUrlTemplate(template, params.q, bangRid);
+}
+
 
 function getResources(params) {
     /*jslint unparam: true*/
+    var url;
     if (params.q.length > 150) {
         searsiaError('Query too long.');
         return;
     }
+    url = fillTemplateCheckBangs(API_TEMPLATE, params);
     searsiaStore.setQuery(params.q);
     $.ajax({
-        url: fillUrlTemplate(API_TEMPLATE, params.q, ''),
+        url: url,
         success: function (data) { queryResources(params.q, data); },
         error: function (xhr, options, error) { searsiaError('Temporarily out of order. Please try again later.'); },
         timeout: 10000,
