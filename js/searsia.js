@@ -415,7 +415,7 @@ function encodedQuery(text) {
 
 
 function fillForm(query) {
-    $('#searsia-form').find('input').attr('value', formQuery(query));
+    $('#searsia-input').val(formQuery(query));
 }
 
 
@@ -1125,7 +1125,6 @@ function printAdvertisements(query, data, rank) {
                 count = filled;
                 if (count === 0) {
                     count = 1;
-                    rank = 3;
                 }
             }
         }
