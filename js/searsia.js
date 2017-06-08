@@ -120,6 +120,13 @@ function setLocalStorage(field, value) {
 }
 
 
+function deleteLocalStorage(field) {
+    try {
+        window.localStorage['searsia-' + field] = null;
+    } catch (ignore) { }
+}
+
+
 function getLocalStorage(field) {
     var value;
     try {
@@ -677,7 +684,7 @@ function htmlFullResult(query, hit, rank) {
         result += '&#151;';
     }
     result += '<br><a ' + createOnClickElementforClickThrough(rank, 'html_result_full')
-        + 'href="' + url + '">' + highlightTerms(restrict(url, 90), query) + '</a></p>';
+        + 'href="' + url + '">' + highlightTerms(restrict(decodeURIComponent(url), 90), query) + '</a></p>';
     return result;
 }
 
@@ -949,7 +956,7 @@ function htmlSubResultWebFull(query, hit, rank) { // duplicate code with htmlSub
     result += '</div>';
     if (url != null) {
         result += '<div class="url"><a ' + createOnClickElementforClickThrough(rank, 'subresult_web_full')
-            + 'href="' + url + '">' + highlightTerms(url, query) + '</a></div>';
+            + 'href="' + url + '">' + highlightTerms(decodeURIComponent(url), query) + '</a></div>';
     }
     result += '</div>';
     return result;
@@ -1061,7 +1068,7 @@ function htmlResource(query, resource, printQuery, rank) {
     }
     if (url != null) {
         result += '<a ' + createOnClickElementforClickThrough(rank, 'html_resource_header')
-            + 'href="' + url + '">' + highlightTerms(restrict(url, 90), query) + '</a>';
+            + 'href="' + url + '">' + highlightTerms(restrict(decodeURIComponent(url), 90), query) + '</a>';
     }
     result += '</p>';
     return result;
@@ -1212,10 +1219,14 @@ function getResults(query, rid, rank, olddata) {
         url: fillUrlTemplate(API_TEMPLATE, query, rid),
         success: function (data) { printResults(query, data, rank, olddata); },
         error: function (xhr, options, err) {
-            printResults(query, olddata, rank, olddata);
+            if (xhr.status == 410) {
+                deleteLocalStorage(rid);
+            } else {
+                printResults(query, olddata, rank, olddata);
+            }
             resultsError(rid, err);
         },
-        timout: 12000,
+        timeout: 12000,
         dataType: 'json'
     });
     /*jslint unparam: false*/
