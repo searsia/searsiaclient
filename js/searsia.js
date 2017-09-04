@@ -669,7 +669,7 @@ function htmlFullResult(query, hit, rank) {
     result += '<h4><a ' + createOnClickElementforClickThrough(rank, 'html_result_full')
         + 'href="' + url + '">' + highlightTerms(title, query) + '</a>';
     if (hit.favicon != null) {
-        result += '<img src="' + hit.favicon + '" alt="">';
+        result += '<img src="' + hit.favicon + '" alt="" onerror="this.style=\'display:none\'">';
     }
     result += '</h4>';
     if (image != null) {
@@ -1056,7 +1056,7 @@ function htmlResource(query, resource, printQuery, rank) {
         title = restrict(title, 80);
         result += highlightTerms(title, query) + '</a>';
         if (resource.favicon != null) {
-            result += '<img src="' + resource.favicon + '" alt="">';
+            result += '<img src="' + resource.favicon + '" alt="" onerror="this.style=\'display:none\'">';
         }
     } else {
         console.log("Warning, no template: " + resource.name);
