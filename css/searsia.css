@@ -19,7 +19,7 @@ body {
 } 
 
 .theme-home {
-  padding-top: 10%;
+  padding-top: 5%;
 } 
 
 .theme-settings {
@@ -42,10 +42,8 @@ body {
 }
 
 .searsia-banner img {
-  display: block;
-  height:auto;
-  max-width:100%;
-  margin-bottom:2em;
+  width:100%;
+  max-width:480px;
 }
 
 .searsia-icon {
