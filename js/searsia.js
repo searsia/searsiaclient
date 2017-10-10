@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  * 
- * Searsia Client v1.0.0 spaghetti code:
+ * Searsia Client v1.0.1 spaghetti code:
  *   Set the value of API_TEMPLATE before to your Searsia Server.
  *
  *   The web page should call getResources(params) 
@@ -35,6 +35,7 @@ var pending   = 0;   // Number of search engines that are answering a query
 var nrResults = 0;   // Total number of results returned 
 var lang      = document.getElementsByTagName('html')[0].getAttribute('lang');    // used for language-dependent texts
 
+var proxyURL = 'https://drsheetmusic.com/proxy.php?url={u}'; // url that proxies images
 var logClickDataUrl = 0; // url to log click data, undefined or 0 to disable click logging
 var sendSessionIdentifier = 0; // do not send anonymous session id with each click
 var suggestionsOn = 1; // Enables suggestions, if they are provided via the API template's server.
@@ -256,6 +257,14 @@ function storeMother(data) {
 }
 
 
+function proxyUrl(url) {
+    if (proxyURL) {
+        url = proxyURL.replace(/\{u\}/g, encodeURIComponent(url));
+    }
+    return url;
+}
+
+
 function placeBanner(data) {
     var banner = null;
     if (data.resource != null && data.resource.banner != null) {
@@ -265,7 +274,7 @@ function placeBanner(data) {
         banner = getLocalStorage('banner');
     }
     if (banner != null && $('#searsia-banner').length) {
-        $('#searsia-banner').html('<img src="' + banner + '" alt="" />');
+        $('#searsia-banner').html('<img src="' + proxyUrl(banner) + '" alt="" />');
         $("#searsia-banner").fadeIn();
     }
 }
@@ -669,12 +678,12 @@ function htmlFullResult(query, hit, rank) {
     result += '<h4><a ' + createOnClickElementforClickThrough(rank, 'html_result_full')
         + 'href="' + url + '">' + highlightTerms(title, query) + '</a>';
     if (hit.favicon != null) {
-        result += '<img src="' + hit.favicon + '" alt="" onerror="this.style=\'display:none\'">';
+        result += '<img src="' + proxyUrl(hit.favicon) + '" alt="" onerror="this.style=\'display:none\'">';
     }
     result += '</h4>';
     if (image != null) {
         result += '<a ' + createOnClickElementforClickThrough(rank, 'html_result_full')
-            + 'href="' + url + '"><img src="' + image + '" /></a>';
+            + 'href="' + url + '"><img src="' + proxyUrl(image) + '" /></a>';
     }
     result += '<p>';
     if (descr == null) { descr = hit.title; }
@@ -919,7 +928,7 @@ function htmlSubResultWeb(query, hit, rank) {
     result += '<div class="sub-result">';
     if (image != null) {
         result += '<a ' + createOnClickElementforClickThrough(rank, 'subresult_html_web')
-            + 'href="' + url + '"><img src="' + image + '"/></a>';
+            + 'href="' + url + '"><img src="' + proxyUrl(image) + '"/></a>';
     }
     result += '<p><a ' + createOnClickElementforClickThrough(rank, 'subresult_html_web')
         + 'href="' + url + '">' + highlightTerms(title, query) + '</a> ';
@@ -946,7 +955,7 @@ function htmlSubResultWebFull(query, hit, rank) { // duplicate code with htmlSub
     result += '<div class="sub-result">';
     if (image != null) {
         result += '<a ' + createOnClickElementforClickThrough(rank, 'subresult_web_full')
-            + 'href="' + url + '"><img src="' + image + '"/></a>';
+            + 'href="' + url + '"><img src="' + proxyUrl(image) + '"/></a>';
     }
     result += '<div class="descr"><a ' + createOnClickElementforClickThrough(rank, 'subresult_web_full')
         + 'href="' + url + '">' + highlightTerms(title, query) + '</a> ';
@@ -989,7 +998,7 @@ function htmlSubResultImage(hit, rank) {
         result = '';
     title = restrict(title, 80);
     result += '<a ' + createOnClickElementforClickThrough(rank, 'subresult_image')
-        + 'href="' + url + '"><img class="sub-image" src="' + image + '" alt="[image]" title="' + title + '"/></a>\n';
+        + 'href="' + url + '"><img class="sub-image" src="' + proxyUrl(image) + '" alt="[image]" title="' + title + '"/></a>\n';
     return result;
 }
 
@@ -1056,7 +1065,7 @@ function htmlResource(query, resource, printQuery, rank) {
         title = restrict(title, 80);
         result += highlightTerms(title, query) + '</a>';
         if (resource.favicon != null) {
-            result += '<img src="' + resource.favicon + '" alt="" onerror="this.style=\'display:none\'">';
+            result += '<img src="' + proxyUrl(resource.favicon) + '" alt="" onerror="this.style=\'display:none\'">';
         }
     } else {
         console.log("Warning, no template: " + resource.name);
