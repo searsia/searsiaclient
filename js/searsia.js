@@ -35,7 +35,7 @@ var pending   = 0;   // Number of search engines that are answering a query
 var nrResults = 0;   // Total number of results returned 
 var lang      = document.getElementsByTagName('html')[0].getAttribute('lang');    // used for language-dependent texts
 
-var proxyURL = 'https://drsheetmusic.com/proxy.php?url={u}'; // url that proxies images
+var proxyURL = 0; // url to proxy images
 var logClickDataUrl = 0; // url to log click data, undefined or 0 to disable click logging
 var sendSessionIdentifier = 0; // do not send anonymous session id with each click
 var suggestionsOn = 1; // Enables suggestions, if they are provided via the API template's server.
@@ -259,7 +259,7 @@ function storeMother(data) {
 
 function proxyUrl(url) {
     if (proxyURL) {
-        url = proxyURL.replace(/\{u\}/g, encodeURIComponent(url));
+        url = proxyURL.replace(/\{u\}/g, encodeURIComponent(url.replace(/&amp;/g, '&')));
     }
     return url;
 }
