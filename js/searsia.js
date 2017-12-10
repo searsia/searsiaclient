@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  * 
- * Searsia Client v1.0.1 spaghetti code:
+ * Searsia Client v1.0.2 spaghetti code:
  *   Set the value of API_TEMPLATE before to your Searsia Server.
  *
  *   The web page should call getResources(params) 
@@ -445,6 +445,8 @@ function fillUrlTemplate(template, query, resourceId) {
         }
     }
     template = template.replace(/\{q\??\}/g, query);
+    template = template.replace(/\{searchTerms\??\}/g, query);
+    template = template.replace('{startPage}', '1');
     return template.replace(/\{[A-Za-z]+\?\}/g, '');  // remove all optional
 }
 
@@ -848,7 +850,7 @@ function inferMissingData(data, query) {
             if (resource.urltemplate != null) {
                 hit.url = fillUrlTemplate(resource.urltemplate, encodedQuery(hit.title), '');
             } else {
-                hit.url = fillUrlTemplate('?q={q}', encodedQuery(hit.title), '');
+                hit.url = fillUrlTemplate('?q={searchTerms}', encodedQuery(hit.title), '');
             }
         } else {
             hit.url = correctUrl(resource.urltemplate, hit.url); //TODO: what if urltemplate is null?
@@ -1054,7 +1056,7 @@ function htmlResource(query, resource, printQuery, rank) {
         result = '<h4>';
     if (resource.urltemplate != null) {
         title = resource.name;
-        if (printQuery && resource.urltemplate.indexOf('{q}') > -1) {
+        if (printQuery && (resource.urltemplate.indexOf('{q}') > -1 || resource.urltemplate.indexOf('{searchTerms}') > -1)) {
             title += ' - ' + printableQuery(query);
             url = fillUrlTemplate(resource.urltemplate, query, '');
         } else {

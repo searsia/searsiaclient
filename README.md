@@ -2,11 +2,13 @@ Searsia web client
 ==================
 http://searsia.org
 
-Usage: Open `index.html` in a web browser... done.
+Usage:
 
-The client will automatically connect to the Searsia server of
-[University of Twente Search][1]. To connect to another server, 
-edit the variable `API_TEMPLATE` in the file `js/searsia.js`.
+1. Set the variable `API_TEMPLATE` in the file `js/searsia.js`;
+2. Open `index.html` in a web browser;
+3. Done.
 
-[1]: https://search.utwente.nl/searsia/search "UT Search Server"
-
+The client will connect to a Searsia server that is set in the
+variable `API_TEMPLATE` in the file `js/searsia.js`. Examples
+of server API templates can be find under:
+http://searsia.org/start.html#clientoptions
