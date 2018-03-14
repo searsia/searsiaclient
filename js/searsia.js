@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  * 
- * Searsia Client v1.0.2 spaghetti code:
+ * Searsia Client v1.1.0 spaghetti code:
  *   Set the value of API_TEMPLATE before to your Searsia Server.
  *
  *   The web page should call getResources(params) 
@@ -36,6 +36,7 @@ var nrResults = 0;   // Total number of results returned
 var lang      = document.getElementsByTagName('html')[0].getAttribute('lang');    // used for language-dependent texts
 
 var proxyURL = 0; // url to proxy images
+var proxyHOST = getHost(proxyURL);
 var logClickDataUrl = 0; // url to log click data, undefined or 0 to disable click logging
 var sendSessionIdentifier = 0; // do not send anonymous session id with each click
 var suggestionsOn = 1; // Enables suggestions, if they are provided via the API template's server.
@@ -258,7 +259,7 @@ function storeMother(data) {
 
 
 function proxyUrl(url) {
-    if (proxyURL) {
+    if (proxyURL && url.indexOf(proxyHOST) === -1) {
         url = proxyURL.replace(/\{u\}/g, encodeURIComponent(url.replace(/&amp;/g, '&')));
     }
     return url;
@@ -348,6 +349,9 @@ function placeSuggestions(data) {
 
 
 function getHost(url) {
+    if (!url) {
+        return null;
+    }
     var match = url.match(/:\/\/(www\.)?(.[^\/:]+)/);
     if (match == null) {
         return null;
@@ -612,11 +616,12 @@ function matchingSnippets(hits, queryTerms) { // TODO for queries length > 2
 
 
 /**
- *  Reranks hits, and select those that match the query
- *  only used if mother has "rerank"
+ *  Computes maxscore of hits
+ *  If rerank == true: rerank and select those that match the query
+ *  Used if mother has "rerank"
  */
-function scoreAllHits(data, query) {
-    var queryTerms, queryLen, hit, score, tscore,
+function scoreAllHits(data, query, rerank) {
+    var queryTerms, queryLen, hit, score, maxscore, tscore,
         newHits = [],
         nrOfTopHits = 0,
         i = 0;
@@ -624,6 +629,7 @@ function scoreAllHits(data, query) {
     queryTerms = query.split(/ +/).sort(function (a, b) {return b.length - a.length; }); // TODO: Split might not work for all character encodings
     queryLen = queryTerms.length;
     newHits = [];
+    maxscore = 0;
     while (i < data.hits.length) {
         hit = data.hits[i];
         score = 0;
@@ -646,12 +652,16 @@ function scoreAllHits(data, query) {
             if (score >= queryLen) { nrOfTopHits += 1; }
             hit.score = score;
             addToHits(newHits, hit);
+            if (score > maxscore) { maxscore = score; }
         }
         if (nrOfTopHits >= 100) { break; }
         i += 1;
     }
-    matchingSnippets(newHits, queryTerms);
-    data.hits = newHits;
+    if (rerank) {
+        matchingSnippets(newHits, queryTerms);
+        data.hits = newHits;
+    }
+    return maxscore;
 }
 
 /**
@@ -1070,7 +1080,6 @@ function htmlResource(query, resource, printQuery, rank) {
             result += '<img src="' + proxyUrl(resource.favicon) + '" alt="" onerror="this.style=\'display:none\'">';
         }
     } else {
-        console.log("Warning, no template: " + resource.name);
         result += highlightTerms(resource.name, query);
     }
     result += '</h4><p>';
@@ -1192,13 +1201,15 @@ function printNormalResults(query, data, rank) {
 
 
 function printResults(query, data, rank, olddata) {
-    var nrDisplayed,
+    var nrDisplayed, newscore, oldscore,
         printQuery = true,
         count = data.hits.length; // TODO: also includes 'rid'-only results from searsia engines
     if (data.resource != null && data.resource.apitemplate != null) {
         localSetResource(data.resource);
     }
-    if (count === 0) {
+    newscore = scoreAllHits(data, query, false);
+    oldscore = scoreAllHits(olddata, query, true);
+    if (count === 0 || oldscore - 0.5 > newscore) { // use old data if olddata is clearly better 
         data = olddata;
         printQuery = false;
         count = data.hits.length;
@@ -1252,7 +1263,7 @@ function queryResources(query, data) {
     storeMother(data);
     placeIcon(data);
     if (data.resource != null && data.resource.rerank != null) {
-        scoreAllHits(data, query);
+        scoreAllHits(data, query, true);
     }
     hits = data.hits;
     while (i < hits.length) {
