@@ -1325,11 +1325,11 @@ function fillTemplateCheckBangs(template, params) {
         terms;
     terms = query.split(/\++/); // This might not work for all char encodings
     for (i = 0; i < terms.length; i += 1) {
-        if (terms[i].startsWith('%21') || terms[i].startsWith('%40')) {
+        if (terms[i].substring(0, 3) === '%21' || terms[i].substring(0, 3) === '%40') {
             bangRid = terms[i].substring(3, terms[i].length).toLowerCase();
             resource = localGetResource(bangRid);
             if (resource) {
-                if (terms[i].startsWith('%21')) {
+                if (terms[i].substring(0, 3) === '%21') {
                     bangUrl = resource.urltemplate;
                 }
             } else {
