@@ -1,0 +1,114 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Searsia Client Unit Tests</title>
+  </head>
+  <body>
+    <h1>Searsia Client Unit Tests</h1>
+    <p>Also run with: <a href="http://kb.mozillazine.org/Dom.storage.enabled">dom.storage.enabled</a> = false in Firefox' about:config</p>
+    <h2>Test results</h2>
+    <div id="testresults"></div>
+    <script src="js/jquery.min.js"></script>
+    <script src="js/searsia.js"></script>
+    <script> <!--
+
+      function printText(text) {
+        var node = document.createElement("p")
+        var textnode = document.createTextNode(text)
+        node.appendChild(textnode)
+        document.getElementById("testresults").appendChild(node)
+      }
+
+      function printObject(object) {
+        printText(JSON.stringify(object))
+      }
+
+      function printTestEquals(name, expected, result) {
+        var text = name
+        if (expected === result) {
+          text += ': passed'
+        } else {
+          text += ': failed. Expected: ' + expected +' Got: ' + result
+        }
+        printText(text)
+      } 
+
+      function printTestAtleast(name, expected, result) {
+        var text = name
+        if (result >= expected) {
+          text += ': passed'
+        } else {
+          text += ': failed. Expected at least: ' + expected +' Got: ' + result
+        }
+        printText(text)
+      } 
+
+      function printTestIsNull(name, result) {
+        var text = name
+        if (result == null) {
+          text += ': passed'
+        } else {
+          text += ': failed. Got: ' + result
+        }
+        printText(text)
+      }
+
+      function printUnitTestConnect(object) {
+        var len
+        if (object != null && object.hits != null) {
+          len = object.hits.length
+        } else {
+          len = object.error
+        }
+        printTestEquals('connect 1', 10, len)
+      }
+
+      function printUnitTestSearch(object) {
+        var len, result
+        if (object != null && object.hits != null) {
+          len = object.hits.length
+        } else {
+          len = object.error
+        }
+        result = 'search '
+        if (object.rank) {
+          result += object.rank
+        }
+        if (object.resource && object.resource.id) {
+          result += ' (' + object.resource.id + ')'
+        }
+        if (object.status) {
+          printTestEquals('final', 'done', object.status)
+        } else {
+          printTestAtleast(result, 4, len)
+        }
+      }
+
+      try { window.localStorage.clear() } catch (ignore) { }
+
+      // correctUrl and fillUrlTemplate
+      var template = 'https://drsheetmusic.com/searsia/index.json?q={searchTerms}&page={startPage?}&optional={optional?}'
+      printTestEquals('url 1', 'https://drsheetmusic.com/searsia/boo.html', searsia.correctUrl(template, 'boo.html'))
+      printTestEquals('url 2', 'https://drsheetmusic.com/boo.html', searsia.correctUrl(template, '/boo.html'))
+      printTestEquals('url 3', 'http://searsia.org', searsia.correctUrl(template, 'http://searsia.org'))
+      printTestEquals('url 4', '//searsia.org', searsia.correctUrl(template, '//searsia.org'))
+      printTestEquals('template 1', 'https://drsheetmusic.com/searsia/index.json?q=boo+baa&page=2&optional=', searsia.fillUrlTemplate(template, 'boo+baa', 2, null))
+      printTestEquals('template 2', 'https://drsheetmusic.com/searsia/index.json?q=test&page=1&optional=',    searsia.fillUrlTemplate(template, 'test', null, null))
+      printTestEquals('template 3', 'https://drsheetmusic.com/searsia/test.json?q=other&page=1&optional=',   searsia.fillUrlTemplate(template, 'other', '1', 'test'))
+
+      // init
+      printTestIsNull('init 1', searsia.initClient(template))
+ 
+      // connect
+      searsia.connectToServer(printUnitTestConnect)
+   
+      // search
+      var params = { 'q': 'mozart', 'p': '1' }
+      searsia.searchFederated(params, printUnitTestSearch)
+
+
+      -->
+    </script>
+  </body>
+</html>
+
