@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Searsia Library v2.0.0:
+ * Searsia Library v1.2.0:
  *
  *   The web page should first call searsia.initClient(template) and then
  *   searsia.searchFederated(params, callback), see: search.html
@@ -170,11 +170,8 @@ var searsia = (function () {
   }
 
   function scoreHit (hit, i, query) {
+    var text, queryTerms
     var score = 0
-
-    var text
-
-    var queryTerms
     query = normalizeText(printableQuery(query))
     queryTerms = query.split(/ +/) // TODO: This might not work for all character encodings
     if (hit.description != null) {
@@ -190,8 +187,8 @@ var searsia = (function () {
   }
 
   function addToHits (hits, hit) {
-    var i; var newIndex = hits.length
-
+    var i
+    var newIndex = hits.length
     var TOP = 100
     if (newIndex < TOP || hit.score > hits[TOP - 1].score) {
       if (newIndex < TOP) { newIndex += 1 }
@@ -221,17 +218,9 @@ var searsia = (function () {
     return text
   }
 
-  function printableQuery (query) {
-    query = query.replace(/\+/g, ' ')
-    query = decodeURIComponent(query)
-    return noHTMLelement(query)
-  }
-
   function scoreText (text, queryTerms) {
-    var i; var j; var len
-
+    var i, j, len
     var textTerms
-
     var score = 0.0
     textTerms = normalizeText(text).split(/ +/)
     for (i = 0; i < queryTerms.length; i += 1) { // TODO: Really? Nested loop??
@@ -250,10 +239,8 @@ var searsia = (function () {
   }
 
   function restrictStart (someText, start, size) { // size must be > 3
-    var i; var j
-
+    var i, j
     var prefix = ''
-
     var postfix = ''
     if (someText != null && someText.length > size) {
       if (start < 0) { start = 0 }
@@ -389,6 +376,42 @@ var searsia = (function () {
     return match[2]
   }
 
+  function urlParameters () {
+    var i, values
+    var params = { q: '', r: '', page: '' }
+    var paramString = window.location.search.substring(1)
+    var parts = paramString.split('&')
+    for (i = 0; i < parts.length; i += 1) {
+      values = parts[i].split('=')
+      if (values[0] === 'q') {
+        params.q = values[1]
+        params.q = params.q.replace(/%3C.*?%3E/g, '') // no HTML
+        params.q = params.q.replace(/%3C|%3E/g, '')
+        params.q = params.q.replace(/^\++|\++$/g, '') // no leading and trailing spaces
+      } else if (values[0] === 'r') {
+        params.r = values[1]
+      } else if (values[0] === 'p') {
+        params.p = values[1]
+      }
+    }
+    return params
+  }
+
+  /* takes a url parameter query and returns a human readable query */
+  function printableQuery (query) {
+    query = query.replace(/\+/g, ' ')
+    query = decodeURIComponent(query)
+    return noHTMLelement(query)
+  }
+
+  /* takes a url parameter query and returns a query for an HTML form */
+  function formQuery (query) {
+    query = printableQuery(query)
+    query = query.replace(/&amp;/g, '&')
+    return query
+  }
+
+  /* takes a human readable query and turns it into an urlencoded query */
   function encodedQuery (text) {
     text = encodeURIComponent(text)
     text = text.replace(/%20/g, '+')
@@ -484,7 +507,7 @@ var searsia = (function () {
     var newscore, oldscore
     var printQuery = true
     var count = data.hits.length // TODO: also includes 'rid'-only results from searsia engines
-    if (data.resource != null && data.resource.apitemplate != null) {
+    if (data.resource != null && data.resource.apitemplate != null) { // TODO: why apitemplate necessary?
       setLocalResource(data.resource)
     }
     newscore = scoreAllHits(data, query, false)
@@ -504,6 +527,7 @@ var searsia = (function () {
         'resource': data.resource,
         'hits': data.hits,
         'rank': rank,
+        'status': 'hits',
         'query': query })
     }
   }
@@ -667,6 +691,18 @@ var searsia = (function () {
   }
 
   return {
+    urlParameters: function () {
+      return urlParameters()
+    },
+    printableQuery: function (query) {
+      return printableQuery(query)
+    },
+    formQuery: function (query) {
+      return formQuery(query)
+    },
+    encodedQuery: function (query) {
+      return encodedQuery(query)
+    },
     correctUrl: function (absUrl, relUrl) {
       return correctUrl(absUrl, relUrl)
     },

@@ -77,20 +77,7 @@
     <script src="js/bootstrap.min.js"></script>
     <script src="js/typeahead.bundle.min.js"></script>
     <script src="js/searsia.js"></script>
-    <script> <!--
-      $(document).ready(function(){
-        initClient();
-        var params = searsiaUrlParameters();
-        if (params.q != '') {
-          fillForm(formQuery(params.q));
-          document.title += ": " + printableQuery(params.q);
-          getResources(params);
-        } else {
-          window.location.replace("index.html");
-        } 
-      });
-      -->
-    </script>
+    <script src="js/exampleclient.js"></script>
 
   </body>
 </html>

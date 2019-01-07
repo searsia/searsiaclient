@@ -77,7 +77,7 @@
         if (object.resource && object.resource.id) {
           result += ' (' + object.resource.id + ')'
         }
-        if (object.status) {
+        if (object.status && object.status === 'done') {
           printTestEquals('final', 'done', object.status)
         } else {
           printTestAtleast(result, 4, len)
