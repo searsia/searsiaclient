@@ -418,7 +418,7 @@ function printResults (searsiaObject) {
   var status = searsiaObject.status
   if (status) {
     if (status === 'start') {
-      // TODO
+      initUI(searsiaObject)
     } else if (status === 'hits') {
       printAggregatedResults(searsiaObject)
     } else if (status === 'done') {

@@ -25,6 +25,7 @@
 'use strict'
 
 var searsia = (function () {
+  var SEARSIAVERSION = 'v1.2.0'
   var globalId = null
   var globalApiTemplate = null
   var globalMother = null
@@ -523,7 +524,7 @@ var searsia = (function () {
         query = ''
       }
       callbackSearch({
-        'searsia': 'v1.0.0',
+        'searsia': SEARSIAVERSION,
         'resource': data.resource,
         'hits': data.hits,
         'rank': rank,
@@ -566,25 +567,34 @@ var searsia = (function () {
     var i = 0
     var rank = 1
     var done = []
-    if (data.resource != null) {
-      setMother(data.resource)
-      if (data.resource.rerank != null) {
+    var resource = data.resource
+    if (resource != null) {
+      setMother(resource)
+      if (resource.rerank != null) {
         scoreAllHits(data, query, true)
       }
+    } else {
+      resource = getMother()
     }
     hits = data.hits
     if (hits == null) {
-      callbackSearch({ 'error': 'No hits returned.' })
+      callbackSearch({ 'error': 'No hits returned.', 'resource': resource })
       return
     }
     globalPending = 0 // global
+    callbackSearch({ 'status': 'start', 'resource': resource })
     while (i < hits.length) {
       rid = hits[i].rid
       if (rid == null) { // a result that is not from another resource
         if (data.resource != null && data.resource.urltemplate != null) {
           hits[i].url = correctUrl(data.resource.urltemplate, hits[i].url)
         }
-        callbackSearch({ 'hits': [ hits[i] ], 'query': query, 'rank': rank })
+        callbackSearch({
+          'searsia': SEARSIAVERSION,
+          'hits': [ hits[i] ],
+          'query': query,
+          'status': 'hits',
+          'rank': rank })
         rank += 1
       } else if (done[rid] !== 1) {
         olddata = { hits: [] }

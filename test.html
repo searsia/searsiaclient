@@ -77,10 +77,15 @@
         if (object.resource && object.resource.id) {
           result += ' (' + object.resource.id + ')'
         }
-        if (object.status && object.status === 'done') {
-          printTestEquals('final', 'done', object.status)
-        } else {
-          printTestAtleast(result, 4, len)
+        if (object.status) {
+          if (object.status === 'start') {
+            printTestEquals('start', 'start', object.status)
+          } else if (object.status === 'done') {
+            printTestEquals('final', 'done', object.status)
+          } else if (object.status === 'hits') {
+            // len = JSON.stringify(object)
+            printTestAtleast(result, 4, len)
+          }
         }
       }
 
