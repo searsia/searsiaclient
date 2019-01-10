@@ -24,12 +24,12 @@
 
 'use strict'
 
-var API_TEMPLATE = 'https://drsheetmusic.com/searsia/index.json?q={searchTerms}&page={startPage?}' // set your API template here
-// var API_TEMPLATE = 'https://search.utwente.nl/searsia/index?q={searchTerms}&page={startPage?}'
+var API_TEMPLATE = ''
 var suggestionsOn = true
 var logClickDataUrl = 0 // url to log click data, undefined or 0 to disable click logging
 var proxyURL = 0 // url to proxy images
 var proxyHOST = getHost(proxyURL)
+var globalNrResults = 0
 
 function getHost (url) {
   if (!url) {
@@ -44,6 +44,24 @@ function getHost (url) {
 
 function printMessage (html) {
   $('#searsia-alert-bottom').html(html)
+}
+
+function printNextPage () {
+  var params = searsia.urlParameters()
+  var query = params.q
+  var page = Number(params.p)
+  var html = ''
+  if (query == null) {
+    query = ''
+  }
+  if (isNaN(page)) {
+    page = 1
+  }
+  if (page > 1) {
+    html = '<a href="search.html?q=' + query + '&p=' + (page - 1) + '">&lt;&lt; Previous page</a> | '
+  }
+  html += '<a href="search.html?q=' + query + '&p=' + (page + 1) + '">Next page &gt;&gt;</a>'
+  printMessage(html)
 }
 
 function fillForm (formQuery) {
@@ -418,11 +436,27 @@ function printResults (searsiaObject) {
   var status = searsiaObject.status
   if (status) {
     if (status === 'start') {
+      printMessage('<img src="images/progress.gif" alt="searching...">')
       initUI(searsiaObject)
     } else if (status === 'hits') {
+      if (searsiaObject.hits && searsiaObject.hits.length) {
+        globalNrResults += searsiaObject.hits.length
+      }
       printAggregatedResults(searsiaObject)
+    } else if (status === 'empty') {
+      printMessage('No results.')
     } else if (status === 'done') {
-      printMessage('done')
+      if (globalNrResults === 0) {
+        printMessage('No results.')
+      } else {
+        printNextPage()
+      }
+    } else if (status === 'error') {
+      if (searsiaObject.error) {
+        printMessage(searsiaObject.error)
+      } else {
+        printMessage('Something went wrong')
+      }
     }
   }
 }
@@ -440,6 +474,7 @@ $(document).ready(function () {
       if (params.q && params.q !== '') {
         fillForm(searsia.formQuery(params.q))
         document.title += ': ' + searsia.printableQuery(params.q)
+        globalNrResults = 0
         searsia.searchFederated(params, printResults)
       } else {
         window.location.replace('index.html')

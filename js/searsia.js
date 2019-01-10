@@ -123,11 +123,16 @@ var searsia = (function () {
   }
 
   function getLocalResource (rid) {
+    var json
     var id = getId()
     if (id == null) {
       return null
     }
-    return getLocalStorage(id + '/' + rid)
+    json = getLocalStorage(id + '/' + rid)
+    if (json) {
+      return JSON.parse(json)
+    }
+    return null
   }
 
   function existsLocalResource (rid) {
@@ -525,10 +530,10 @@ var searsia = (function () {
       }
       callbackSearch({
         'searsia': SEARSIAVERSION,
+        'status': 'hits',
         'resource': data.resource,
         'hits': data.hits,
         'rank': rank,
-        'status': 'hits',
         'query': query })
     }
   }
@@ -536,7 +541,11 @@ var searsia = (function () {
   function getResults (query, rid, rank, olddata, callbackSearch) {
     var template = getApiTemplate()
     if (template == null) {
-      callbackSearch({ 'error': 'No API template found.', 'resource': { 'id': rid } })
+      callbackSearch({
+        'searsia': SEARSIAVERSION,
+        'status': 'error',
+        'resource': { 'id': rid },
+        'message': 'No API template found.' })
     } else {
       globalPending += 1 // global
       $.ajax({
@@ -577,12 +586,18 @@ var searsia = (function () {
       resource = getMother()
     }
     hits = data.hits
-    if (hits == null) {
-      callbackSearch({ 'error': 'No hits returned.', 'resource': resource })
+    if (hits == null || hits.length === 0) {
+      callbackSearch({
+        'searsia': SEARSIAVERSION,
+        'status': 'empty',
+        'resource': resource })
       return
     }
     globalPending = 0 // global
-    callbackSearch({ 'status': 'start', 'resource': resource })
+    callbackSearch({
+      'searsia': SEARSIAVERSION,
+      'status': 'start',
+      'resource': resource })
     while (i < hits.length) {
       rid = hits[i].rid
       if (rid == null) { // a result that is not from another resource
@@ -624,17 +639,17 @@ var searsia = (function () {
     var url, result, query, page
     var template = getApiTemplate()
     if (template == null) {
-      result = { 'error': 'First initialize with searsia.initClient(apiTemplate)' }
+      result = { 'status': 'error', 'error': 'First initialize with searsia.initClient(apiTemplate)' }
       callbackSearch(result)
       return
     }
     if (params.q == null || params.q === '') {
-      result = { 'error': 'No query.' }
+      result = { 'status': 'error', 'error': 'No query.' }
       callbackSearch(result)
       return
     }
     if (params.q.length > 150) {
-      result = { 'error': 'Query too long.' }
+      result = { 'status': 'error', 'error': 'Query too long.' }
       callbackSearch(result)
       return
     }
@@ -649,7 +664,7 @@ var searsia = (function () {
       url: url,
       success: function (data) { queryResources(query, data, callbackSearch) },
       error: function (xhr, options, error) {
-        result = { 'error': 'Temporarily out of order. Please try again later.' }
+        result = { 'status': 'error', 'error': 'Temporarily out of order. Please try again later.' }
         callbackSearch(result)
       },
       timeout: 10000,
@@ -662,6 +677,7 @@ var searsia = (function () {
     var template = getApiTemplate()
     var result = { }
     if (template == null) {
+      result.status = 'error'
       result.error = 'If you see this then searsiaclient needs to be initialized with searsia.initClient(apiTemplate)'
       callbackConnect(result)
     } else {
@@ -674,6 +690,7 @@ var searsia = (function () {
           callbackConnect(data)
         },
         error: function (xhr, options, error) {
+          result.status = 'error'
           result.error = 'Temporarily no connection possible. Please try again later.'
           callbackConnect(result)
         },
