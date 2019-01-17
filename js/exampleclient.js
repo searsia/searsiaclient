@@ -22,7 +22,6 @@
 'use strict'
 
 var API_TEMPLATE = '' // set your API template here
-var API_TEMPLATE = 'https://drsheetmusic.com/searsia/index.json?q={searchTerms}&page={startPage?}'
 
 var suggestionsOn = true
 var logClickDataUrl = 0 // url to log click data, undefined or 0 to disable click logging
