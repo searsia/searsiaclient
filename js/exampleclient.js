@@ -480,7 +480,8 @@ $(document).ready(function () {
         document.title += ': ' + searsia.printableQuery(params.q)
         globalNrResults = 0
         searsia.searchFederated(params, printResults)
-      } else {
+      } else if (window.location.pathname &&
+          window.location.pathname.indexOf('search.html') !== -1) {
         window.location.replace('index.html')
       }
     }

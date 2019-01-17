@@ -559,12 +559,15 @@ var searsia = (function () {
   function returnResults (query, data, rank, olddata, callbackSearch) {
     var newscore, oldscore
     var printQuery = true
-    var count = data.hits.length // TODO: also includes 'rid'-only results from searsia engines
+    var count = 0
     if (data.resource != null && data.resource.apitemplate != null) { // TODO: why apitemplate necessary?
       setLocalResource(data.resource)
     }
-    newscore = scoreAllHits(data, query, false)
-    oldscore = scoreAllHits(olddata, query, true)
+    if (data.hits && data.hits.length) {
+      count = data.hits.length // TODO: also includes 'rid'-only results
+      newscore = scoreAllHits(data, query, false)
+      oldscore = scoreAllHits(olddata, query, true)
+    }
     if (count === 0 || oldscore - 0.5 > newscore) { // use old data if olddata is clearly better
       data = olddata
       printQuery = false
