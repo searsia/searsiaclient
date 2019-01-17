@@ -13,10 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Searsia Client v2.0.0:
- *
- *   The web page should first call searsia.initClient(template) and then
- *   searsia.searchFederated(params, callback), see: search.html
+ * Example client code
  *   Syntax checked with: standard (https://standardjs.com)
  */
 
@@ -24,7 +21,9 @@
 
 'use strict'
 
-var API_TEMPLATE = ''
+var API_TEMPLATE = '' // set your API template here
+var API_TEMPLATE = 'https://drsheetmusic.com/searsia/index.json?q={searchTerms}&page={startPage?}'
+
 var suggestionsOn = true
 var logClickDataUrl = 0 // url to log click data, undefined or 0 to disable click logging
 var proxyURL = 0 // url to proxy images
@@ -51,16 +50,20 @@ function printNextPage () {
   var query = params.q
   var page = Number(params.p)
   var html = ''
-  if (query == null) {
-    query = ''
+  if (API_TEMPLATE.indexOf('{startPage') !== -1) {
+    if (query == null) {
+      query = ''
+    }
+    if (isNaN(page)) {
+      page = 1
+    }
+    if (page > 1) {
+      html = '<a href="search.html?q=' + query + '&p=' + (page - 1) + '">&lt;&lt; Previous page</a> | '
+    }
+    html += '<a href="search.html?q=' + query + '&p=' + (page + 1) + '">Next page &gt;&gt;</a>'
+  } else {
+    html = 'Done.'
   }
-  if (isNaN(page)) {
-    page = 1
-  }
-  if (page > 1) {
-    html = '<a href="search.html?q=' + query + '&p=' + (page - 1) + '">&lt;&lt; Previous page</a> | '
-  }
-  html += '<a href="search.html?q=' + query + '&p=' + (page + 1) + '">Next page &gt;&gt;</a>'
   printMessage(html)
 }
 
@@ -131,12 +134,14 @@ function initUI (searsiaObject) {
       $('head title').html(name + ' - Search')
     }
     if (banner && $('#searsia-banner').length) {
-      $('#searsia-banner').html('<img src="' + banner + '" alt="" />') // TODO: proxyUrl(banner)
+      $('#searsia-banner').html('<img src="' + proxyUrl(banner) + '" alt="" />')
       $('#searsia-banner').fadeIn()
     }
     if (suggesttemplate) {
       initSuggestion(suggesttemplate)
     }
+  } else {
+    printMessage('Temporarily out of order. Please try again later.')
   }
 }
 
@@ -443,8 +448,6 @@ function printResults (searsiaObject) {
         globalNrResults += searsiaObject.hits.length
       }
       printAggregatedResults(searsiaObject)
-    } else if (status === 'empty') {
-      printMessage('No results.')
     } else if (status === 'done') {
       if (globalNrResults === 0) {
         printMessage('No results.')
@@ -455,7 +458,7 @@ function printResults (searsiaObject) {
       if (searsiaObject.error) {
         printMessage(searsiaObject.error)
       } else {
-        printMessage('Something went wrong')
+        printMessage('Something went wrong.')
       }
     }
   }
@@ -466,7 +469,9 @@ $(document).ready(function () {
     printMessage('If you see this then searsiaclient needs to be configured. Please set the value of API_TEMPLATE in exampleclient.js.')
   } else {
     var res = searsia.initClient(API_TEMPLATE)
-    initUI(res) // init with old data, if available
+    if (res) {
+      initUI(res) // init with old data, if available
+    }
     if ($('#searsia-banner').length) { // this is the home page
       searsia.connectToServer(initUI) // init: update interface with new data
     } else {

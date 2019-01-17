@@ -16,11 +16,9 @@
  * Searsia Library v1.2.0:
  *
  *   The web page should first call searsia.initClient(template) and then
- *   searsia.searchFederated(params, callback), see: search.html
+ *   searsia.searchFederated(params, callback), see: exampleclient.js
  *   Syntax checked with: standard (https://standardjs.com)
  */
-
-/* global $ */
 
 'use strict'
 
@@ -30,6 +28,55 @@ var searsia = (function () {
   var globalApiTemplate = null
   var globalMother = null
   var globalPending = 0 // Number of search engines that are answering a query
+
+  /* replace JQuery $.ajax() */
+
+  function searsiaAjax (ajaxObject) {
+    var data, response, message
+    var request = new window.XMLHttpRequest()
+    var url = ajaxObject.url
+    var success = ajaxObject.success
+    var error = ajaxObject.error
+    var timeout = ajaxObject.timeout
+    var dataType = ajaxObject.dataType
+    if (!url) {
+      error(null, null, 'No url')
+    } else {
+      request.open('GET', url, true)
+      request.onload = function () {
+        if (request.status === 200) {
+          response = request.responseText
+          if (response) {
+            if (dataType && dataType === 'json') {
+              try {
+                data = JSON.parse(response)
+              } catch (e) {
+                error(request, null, e.message)
+                return
+              }
+            }
+            success(data)
+          } else {
+            error(request, null, request.statusText)
+          }
+        } else { // We reached our target server, but it returned an error
+          message = request.statusText
+          if (!message) {
+            message = 'Not available'
+          }
+          error(request, null, message)
+        }
+      }
+      request.onerror = function () { // There was a connection error of some sort
+        error(request, null, 'Connection error')
+      }
+      request.ontimeout = function () { // There was a time out
+        error(request, null, 'Time out')
+      }
+      request.timeout = timeout
+      request.send()
+    }
+  }
 
   /* Basic local storage functions */
 
@@ -445,7 +492,7 @@ var searsia = (function () {
       hit = data.hits[i]
       if (hit.title == null) { // everything *must* have a title
         hit.title = 'Title'
-        console.log('Warning: result without title')
+        console.log('WARNING: result without title')
       } else {
         hit.title = noHTMLelement(hit.title)
       }
@@ -505,7 +552,7 @@ var searsia = (function () {
 
   function checkEmpty (callbackSearch) {
     if (globalPending === 0) {
-      callbackSearch({ 'status': 'done' })
+      callbackSearch({ 'searsia': SEARSIAVERSION, 'status': 'done' })
     }
   }
 
@@ -548,7 +595,7 @@ var searsia = (function () {
         'message': 'No API template found.' })
     } else {
       globalPending += 1 // global
-      $.ajax({
+      searsiaAjax({
         url: fillUrlTemplate(template, query, 1, rid),
         success: function (data) {
           returnResults(query, data, rank, olddata, callbackSearch)
@@ -585,19 +632,13 @@ var searsia = (function () {
     } else {
       resource = getMother()
     }
+    callbackSearch({ 'searsia': SEARSIAVERSION, 'status': 'start', 'resource': resource })
     hits = data.hits
+    globalPending = 0 // global
     if (hits == null || hits.length === 0) {
-      callbackSearch({
-        'searsia': SEARSIAVERSION,
-        'status': 'empty',
-        'resource': resource })
+      callbackSearch({ 'searsia': SEARSIAVERSION, 'status': 'done' })
       return
     }
-    globalPending = 0 // global
-    callbackSearch({
-      'searsia': SEARSIAVERSION,
-      'status': 'start',
-      'resource': resource })
     while (i < hits.length) {
       rid = hits[i].rid
       if (rid == null) { // a result that is not from another resource
@@ -636,21 +677,18 @@ var searsia = (function () {
   }
 
   function searchFederated (params, callbackSearch) {
-    var url, result, query, page
+    var url, query, page
     var template = getApiTemplate()
     if (template == null) {
-      result = { 'status': 'error', 'error': 'First initialize with searsia.initClient(apiTemplate)' }
-      callbackSearch(result)
+      callbackSearch({ 'status': 'error', 'error': 'First initialize with searsia.initClient(apiTemplate)' })
       return
     }
     if (params.q == null || params.q === '') {
-      result = { 'status': 'error', 'error': 'No query.' }
-      callbackSearch(result)
+      callbackSearch({ 'status': 'error', 'error': 'No query.' })
       return
     }
     if (params.q.length > 150) {
-      result = { 'status': 'error', 'error': 'Query too long.' }
-      callbackSearch(result)
+      callbackSearch({ 'status': 'error', 'error': 'Query too long.' })
       return
     }
     query = params.q
@@ -660,12 +698,12 @@ var searsia = (function () {
       page = params.p
     }
     url = fillUrlTemplate(template, query, page, null)
-    $.ajax({
+    searsiaAjax({
       url: url,
       success: function (data) { queryResources(query, data, callbackSearch) },
       error: function (xhr, options, error) {
-        result = { 'status': 'error', 'error': 'Temporarily out of order. Please try again later.' }
-        callbackSearch(result)
+        console.log('ERROR: ' + error)
+        callbackSearch({ 'status': 'error', 'error': 'Temporarily out of order. Please try again later.' })
       },
       timeout: 10000,
       dataType: 'json'
@@ -675,24 +713,21 @@ var searsia = (function () {
   /* connect to mother and return definition */
   function connectToServer (callbackConnect) {
     var template = getApiTemplate()
-    var result = { }
     if (template == null) {
-      result.status = 'error'
-      result.error = 'If you see this then searsiaclient needs to be initialized with searsia.initClient(apiTemplate)'
-      callbackConnect(result)
+      callbackConnect({ 'status': 'error', 'error': 'If you see this then searsiaclient needs to be initialized with searsia.initClient(apiTemplate)' })
     } else {
-      $.ajax({
+      searsiaAjax({
         url: fillUrlTemplate(template, '', ''),
         success: function (data) {
           if (data.resource != null) {
+            data.status = 'connect'
             setMother(data.resource)
           }
           callbackConnect(data)
         },
         error: function (xhr, options, error) {
-          result.status = 'error'
-          result.error = 'Temporarily no connection possible. Please try again later.'
-          callbackConnect(result)
+          console.log('ERROR: ' + error)
+          callbackConnect({ 'status': 'error', 'error': error })
         },
         timeout: 10000,
         dataType: 'json'
