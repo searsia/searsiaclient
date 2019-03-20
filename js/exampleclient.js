@@ -487,3 +487,12 @@ $(document).ready(function () {
     }
   }
 })
+
+$(window).on('pageshow', function () {
+  if (!$('#searsia-banner').length) { // this is not the home page
+    var params = searsia.urlParameters()
+    if (params.q && params.q !== '') {
+      fillForm(searsia.formQuery(params.q))
+    }
+  }
+})

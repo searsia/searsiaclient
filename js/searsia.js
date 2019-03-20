@@ -560,11 +560,11 @@ var searsia = (function () {
     var newscore, oldscore
     var printQuery = true
     var count = 0
-    if (data.resource != null && data.resource.apitemplate != null) { // TODO: why apitemplate necessary?
+    if (data.resource && data.resource.apitemplate) { // TODO: why apitemplate necessary?
       setLocalResource(data.resource)
     }
     if (data.hits && data.hits.length) {
-      count = data.hits.length // TODO: also includes 'rid'-only results
+      count = data.hits.length // TODO: also includes 'rid'-only results from searsia engines
       newscore = scoreAllHits(data, query, false)
       oldscore = scoreAllHits(olddata, query, true)
     }
