@@ -198,7 +198,7 @@ var searsia = (function () {
   }
 
   /* Template: only works on Searsia Server templates */
-  function fillUrlTemplate (template, query, page, resourceId) {
+  function fillUrlTemplate (template, query, page, resourceId, resulttype) {
     var start, end, ext
     var json = '.json'
     if (resourceId) {
@@ -216,9 +216,13 @@ var searsia = (function () {
     if (page == null) {
       page = 1
     }
+    if (resulttype == null) {
+      resulttype = ''
+    }
     template = template.replace(/\{q\??\}/g, query)
     template = template.replace(/\{searchTerms\??\}/g, query)
     template = template.replace(/\{startPage\??\}/, page)
+    template = template.replace(/\{resultType\??\}/, resulttype)
     return template.replace(/\{[A-Za-z]+\?\}/g, '') // remove all optional
   }
 
@@ -431,7 +435,7 @@ var searsia = (function () {
 
   function urlParameters () {
     var i, values
-    var params = { q: '', r: '', page: '' }
+    var params = { q: '', r: '', p: '', t: '' }
     var paramString = window.location.search.substring(1)
     var parts = paramString.split('&')
     for (i = 0; i < parts.length; i += 1) {
@@ -445,6 +449,8 @@ var searsia = (function () {
         params.r = values[1]
       } else if (values[0] === 'p') {
         params.p = values[1]
+      } else if (values[0] === 't') {
+        params.t = values[1]
       }
     }
     return params
@@ -501,7 +507,7 @@ var searsia = (function () {
         if (resource.urltemplate != null) {
           hit.url = fillUrlTemplate(resource.urltemplate, encodedQuery(hit.title), '')
         } else {
-          hit.url = fillUrlTemplate('?q={searchTerms}', encodedQuery(hit.title), '')
+          hit.url = fillUrlTemplate('?q={searchTerms}&type={resultType?}', encodedQuery(hit.title), '')
         }
       } else {
         if (resource.urltemplate) {
@@ -681,6 +687,7 @@ var searsia = (function () {
 
   function searchFederated (params, callbackSearch) {
     var url, query, page
+    var resulttype = null
     var template = getApiTemplate()
     if (template == null) {
       callbackSearch({ 'status': 'error', 'error': 'First initialize with searsia.initClient(apiTemplate)' })
@@ -700,7 +707,10 @@ var searsia = (function () {
     } else {
       page = params.p
     }
-    url = fillUrlTemplate(template, query, page, null)
+    if (params.t) {
+      resulttype = params.t
+    }
+    url = fillUrlTemplate(template, query, page, null, resulttype)
     searsiaAjax({
       url: url,
       success: function (data) { queryResources(query, data, callbackSearch) },
@@ -720,7 +730,7 @@ var searsia = (function () {
       callbackConnect({ 'status': 'error', 'error': 'If you see this then searsiaclient needs to be initialized with searsia.initClient(apiTemplate)' })
     } else {
       searsiaAjax({
-        url: fillUrlTemplate(template, '', ''),
+        url: fillUrlTemplate(template, '', '', null, null),
         success: function (data) {
           if (data.resource != null) {
             data.status = 'connect'
@@ -771,8 +781,8 @@ var searsia = (function () {
     correctUrl: function (absUrl, relUrl) {
       return correctUrl(absUrl, relUrl)
     },
-    fillUrlTemplate: function (template, query, page, resourceId) {
-      return fillUrlTemplate(template, query, page, resourceId)
+    fillUrlTemplate: function (template, query, page, resourceId, resultType) {
+      return fillUrlTemplate(template, query, page, resourceId, resultType)
     },
     initClient: function (template) {
       return initClient(template)

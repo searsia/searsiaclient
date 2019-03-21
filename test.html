@@ -92,14 +92,20 @@
       try { window.localStorage.clear() } catch (ignore) { }
 
       // correctUrl and fillUrlTemplate
-      var template = 'https://drsheetmusic.com/searsia/index.json?q={searchTerms}&page={startPage?}&optional={optional?}'
+      var template = 'https://drsheetmusic.com/searsia/index.json?q={searchTerms}&page={startPage?}&type={resultType?}&optional={optional?}'
       printTestEquals('url 1', 'https://drsheetmusic.com/searsia/boo.html', searsia.correctUrl(template, 'boo.html'))
       printTestEquals('url 2', 'https://drsheetmusic.com/boo.html', searsia.correctUrl(template, '/boo.html'))
       printTestEquals('url 3', 'http://searsia.org', searsia.correctUrl(template, 'http://searsia.org'))
       printTestEquals('url 4', '//searsia.org', searsia.correctUrl(template, '//searsia.org'))
-      printTestEquals('template 1', 'https://drsheetmusic.com/searsia/index.json?q=boo+baa&page=2&optional=', searsia.fillUrlTemplate(template, 'boo+baa', 2, null))
-      printTestEquals('template 2', 'https://drsheetmusic.com/searsia/index.json?q=test&page=1&optional=',    searsia.fillUrlTemplate(template, 'test', null, null))
-      printTestEquals('template 3', 'https://drsheetmusic.com/searsia/test.json?q=other&page=1&optional=',   searsia.fillUrlTemplate(template, 'other', '1', 'test'))
+      printTestEquals('template 1', 'https://drsheetmusic.com/searsia/index.json?q=boo+baa&page=2&type=&optional=', 
+        searsia.fillUrlTemplate(template, 'boo+baa', 2, null, null))
+      printTestEquals('template 2', 'https://drsheetmusic.com/searsia/index.json?q=test&page=1&type=&optional=',
+        searsia.fillUrlTemplate(template, 'test', null, null, null))
+      printTestEquals('template 3', 'https://drsheetmusic.com/searsia/test.json?q=other&page=1&type=&optional=', 
+        searsia.fillUrlTemplate(template, 'other', '1', 'test', null))
+      console.log("TEMPlATE 4")
+      printTestEquals('template 4', 'https://drsheetmusic.com/searsia/view.json?q=help&page=1&type=video&optional=', 
+        searsia.fillUrlTemplate(template, 'help', 1, 'view', 'video'))
 
       // init
       printTestIsNull('init 1', searsia.initClient(template))

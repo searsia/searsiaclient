@@ -53,7 +53,7 @@ function printNextPage () {
     if (query == null) {
       query = ''
     }
-    if (isNaN(page)) {
+    if (isNaN(page) || page < 1) {
       page = 1
     }
     if (page > 1) {
