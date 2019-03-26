@@ -482,7 +482,7 @@ var searsia = (function () {
    * That is, we purposely change the values of data and
    * resource here...
    */
-  function inferMissingData (data, query) {
+  function inferMissingData (data, query, resulttype) {
     var i, hit, resource, rhost
     var typeImages = true
     var typeSmall = true
@@ -505,9 +505,9 @@ var searsia = (function () {
       hit.score = scoreHit(hit, i, query) // TODO: more costly now!
       if (hit.url == null) {
         if (resource.urltemplate != null) {
-          hit.url = fillUrlTemplate(resource.urltemplate, encodedQuery(hit.title), '')
+          hit.url = fillUrlTemplate(resource.urltemplate, encodedQuery(hit.title), 1, '', resulttype)
         } else {
-          hit.url = fillUrlTemplate('?q={searchTerms}&type={resultType?}', encodedQuery(hit.title), '')
+          hit.url = fillUrlTemplate('?q={searchTerms}&t={resultType?}', encodedQuery(hit.title), null, null, resulttype)
         }
       } else {
         if (resource.urltemplate) {
@@ -562,7 +562,7 @@ var searsia = (function () {
     }
   }
 
-  function returnResults (query, data, rank, olddata, callbackSearch) {
+  function returnResults (query, resulttype, data, rank, olddata, callbackSearch) {
     var newscore, oldscore
     var printQuery = true
     var count = 0
@@ -580,7 +580,7 @@ var searsia = (function () {
       count = data.hits.length
     }
     if (count > 0) {
-      inferMissingData(data, query)
+      inferMissingData(data, query, resulttype)
       if (!printQuery) {
         query = ''
       }
@@ -594,7 +594,7 @@ var searsia = (function () {
     }
   }
 
-  function getResults (query, rid, rank, olddata, callbackSearch) {
+  function getResults (query, resulttype, rid, rank, olddata, callbackSearch) {
     var template = getApiTemplate()
     if (template == null) {
       callbackSearch({
@@ -605,9 +605,9 @@ var searsia = (function () {
     } else {
       globalPending += 1 // global
       searsiaAjax({
-        url: fillUrlTemplate(template, query, 1, rid),
+        url: fillUrlTemplate(template, query, 1, rid, resulttype),
         success: function (data) {
-          returnResults(query, data, rank, olddata, callbackSearch)
+          returnResults(query, resulttype, data, rank, olddata, callbackSearch)
           globalPending -= 1 // global
           checkEmpty(callbackSearch)
         },
@@ -615,7 +615,7 @@ var searsia = (function () {
           if (xhr.status === 410) {
             deleteLocalResource(rid)
           } else {
-            returnResults(query, olddata, rank, olddata, callbackSearch)
+            returnResults(query, resulttype, olddata, rank, olddata, callbackSearch)
           }
           console.log('WARNING: ' + rid + ' unavailable.')
           globalPending -= 1 // global
@@ -627,7 +627,7 @@ var searsia = (function () {
     }
   }
 
-  function queryResources (query, data, callbackSearch) {
+  function queryResources (query, resulttype, data, callbackSearch) {
     var rid, hits, olddata
     var i = 0
     var rank = 1
@@ -677,7 +677,7 @@ var searsia = (function () {
         } else {
           olddata.resource = { id: rid } // TODO: get it?
         }
-        getResults(query, rid, rank, olddata, callbackSearch)
+        getResults(query, resulttype, rid, rank, olddata, callbackSearch)
         done[rid] = 1
         rank += 1
       }
@@ -713,7 +713,7 @@ var searsia = (function () {
     url = fillUrlTemplate(template, query, page, null, resulttype)
     searsiaAjax({
       url: url,
-      success: function (data) { queryResources(query, data, callbackSearch) },
+      success: function (data) { queryResources(query, resulttype, data, callbackSearch) },
       error: function (xhr, options, error) {
         console.log('ERROR: ' + error)
         callbackSearch({ 'status': 'error', 'error': 'Temporarily out of order. Please try again later.' })
