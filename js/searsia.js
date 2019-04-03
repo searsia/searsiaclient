@@ -226,9 +226,10 @@ var searsia = (function () {
     return template.replace(/\{[A-Za-z]+\?\}/g, '') // remove all optional
   }
 
-  function scoreHit (hit, i, query) {
+  function scoreHit (hit, i, query, prior) {
     var text, queryTerms
     var score = 0
+    if (!prior) { prior = 0.0 }
     query = normalizeText(printableQuery(query))
     queryTerms = query.split(/ +/) // TODO: This might not work for all character encodings
     if (hit.description != null) {
@@ -240,7 +241,11 @@ var searsia = (function () {
       if (text.length > 300) { text = text.substring(0, 300) }
       score = scoreText(text, queryTerms)
     }
-    return score - (i / 10)
+    score += prior - (i / 10)
+    if (score < 0) {
+      score = 0
+    }
+    return score
   }
 
   function addToHits (hits, hit) {
@@ -482,15 +487,19 @@ var searsia = (function () {
    * That is, we purposely change the values of data and
    * resource here...
    */
-  function inferMissingData (data, query, resulttype) {
+  function inferMissingData (data, query, resulttype, rank) {
     var i, hit, resource, rhost
     var typeImages = true
     var typeSmall = true
     var typeFull = false
     var typeTitleOnly = true
     var count = data.hits.length - 1
+    var prior = null
 
     resource = data.resource
+    prior = Number(resource.prior)
+    if (isNaN(prior) || prior == null) { prior = 0.0 }
+
     if (resource.urltemplate != null) {
       rhost = getHost(resource.urltemplate)
     }
@@ -502,7 +511,7 @@ var searsia = (function () {
       } else {
         hit.title = noHTMLelement(hit.title)
       }
-      hit.score = scoreHit(hit, i, query) // TODO: more costly now!
+      hit.score = scoreHit(hit, i, query, (prior / rank)) // TODO: more costly now!
       if (hit.url == null) {
         if (resource.urltemplate != null) {
           hit.url = fillUrlTemplate(resource.urltemplate, encodedQuery(hit.title), 1, '', resulttype)
@@ -564,7 +573,7 @@ var searsia = (function () {
 
   function returnResults (query, resulttype, data, rank, olddata, callbackSearch) {
     var newscore, oldscore
-    var printQuery = true
+    var liveResults = true
     var count = 0
     if (data.resource && data.resource.apitemplate) { // TODO: why apitemplate necessary?
       setLocalResource(data.resource)
@@ -576,21 +585,19 @@ var searsia = (function () {
     }
     if (count === 0 || oldscore - 0.5 > newscore) { // use old data if olddata is clearly better
       data = olddata
-      printQuery = false
+      liveResults = false
       count = data.hits.length
     }
     if (count > 0) {
-      inferMissingData(data, query, resulttype)
-      if (!printQuery) {
-        query = ''
-      }
+      inferMissingData(data, query, resulttype, rank)
       callbackSearch({
         'searsia': SEARSIAVERSION,
         'status': 'hits',
         'resource': data.resource,
         'hits': data.hits,
         'rank': rank,
-        'query': query })
+        'query': query,
+        'live': liveResults })
     }
   }
 
