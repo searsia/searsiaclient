@@ -70,21 +70,23 @@
         } else {
           len = object.error
         }
-        result = 'search '
+        result = ' '
+        if (object.sessionid) {
+          result += object.sessionid
+        }
         if (object.rank) {
-          result += object.rank
+          result += ' ' + object.rank
         }
         if (object.resource && object.resource.id) {
           result += ' (' + object.resource.id + ')'
         }
         if (object.status) {
           if (object.status === 'start') {
-            printTestEquals('start', 'start', object.status)
+            printTestEquals('start' + result, 'start', object.status)
           } else if (object.status === 'done') {
-            printTestEquals('final', 'done', object.status)
+            printTestEquals('final' + result, 'done', object.status)
           } else if (object.status === 'hits') {
-            // len = JSON.stringify(object)
-            printTestAtleast(result, 4, len)
+            printTestAtleast('hits' + result, 4, len)
           }
         }
       }
@@ -114,8 +116,11 @@
       searsia.connectToServer(printUnitTestConnect)
    
       // search
-      var params = { 'q': 'mozart', 'p': '1' }
-      searsia.searchFederated(params, printUnitTestSearch)
+      var params1 = { 'q': 'mozart', 'p': '1' }
+      searsia.searchFederated(params1, printUnitTestSearch)
+      var params2 = { 'q': 'bach', 'p': '1' }
+      searsia.searchFederated(params2, printUnitTestSearch)
+
 
 
       -->

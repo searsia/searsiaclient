@@ -27,7 +27,6 @@ var searsia = (function () {
   var globalId = null
   var globalApiTemplate = null
   var globalMother = null
-  var globalPending = 0 // Number of search engines that are answering a query
 
   /* replace JQuery $.ajax() */
 
@@ -565,13 +564,7 @@ var searsia = (function () {
     }
   }
 
-  function checkEmpty (callbackSearch) {
-    if (globalPending === 0) {
-      callbackSearch({ 'searsia': SEARSIAVERSION, 'status': 'done' })
-    }
-  }
-
-  function returnResults (query, resulttype, data, rank, olddata, callbackSearch) {
+  function returnResults (query, resulttype, sessionid, data, rank, olddata, callbackSearch) {
     var newscore, oldscore
     var liveResults = true
     var count = 0
@@ -593,6 +586,7 @@ var searsia = (function () {
       callbackSearch({
         'searsia': SEARSIAVERSION,
         'status': 'hits',
+        'sessionid': sessionid,
         'resource': data.resource,
         'hits': data.hits,
         'rank': rank,
@@ -601,40 +595,49 @@ var searsia = (function () {
     }
   }
 
-  function getResults (query, resulttype, rid, rank, olddata, callbackSearch) {
-    var template = getApiTemplate()
-    if (template == null) {
-      callbackSearch({
-        'searsia': SEARSIAVERSION,
-        'status': 'error',
-        'resource': { 'id': rid },
-        'message': 'No API template found.' })
-    } else {
-      globalPending += 1 // global
-      searsiaAjax({
-        url: fillUrlTemplate(template, query, 1, rid, resulttype),
-        success: function (data) {
-          returnResults(query, resulttype, data, rank, olddata, callbackSearch)
-          globalPending -= 1 // global
-          checkEmpty(callbackSearch)
-        },
-        error: function (xhr, options, err) {
-          if (xhr.status === 410) {
-            deleteLocalResource(rid)
-          } else {
-            returnResults(query, resulttype, olddata, rank, olddata, callbackSearch)
-          }
-          console.log('WARNING: ' + rid + ' unavailable.')
-          globalPending -= 1 // global
-          checkEmpty(callbackSearch)
-        },
-        timeout: 12000,
-        dataType: 'json'
-      })
-    }
-  }
+  function queryResources (query, resulttype, sessionid, data, callbackSearch) {
+    var pending = 0 // will be used by checkEmpty() and getResults()
 
-  function queryResources (query, resulttype, data, callbackSearch) {
+    function checkEmpty (sessionid, callbackSearch) {
+      if (pending === 0) {
+        callbackSearch({ 'searsia': SEARSIAVERSION, 'sessionid': sessionid, 'status': 'done' })
+      }
+    }
+
+    function getResults (query, resulttype, sessionid, rid, rank, olddata, callbackSearch) {
+      var template = getApiTemplate()
+      if (template == null) {
+        callbackSearch({
+          'searsia': SEARSIAVERSION,
+          'status': 'error',
+          'sessionid': sessionid,
+          'resource': { 'id': rid },
+          'message': 'No API template found.' })
+      } else {
+        pending += 1
+        searsiaAjax({
+          url: fillUrlTemplate(template, query, 1, rid, resulttype),
+          success: function (data) {
+            returnResults(query, resulttype, sessionid, data, rank, olddata, callbackSearch)
+            pending -= 1
+            checkEmpty(sessionid, callbackSearch)
+          },
+          error: function (xhr, options, err) {
+            if (xhr.status === 410) {
+              deleteLocalResource(rid)
+            } else {
+              returnResults(query, resulttype, sessionid, olddata, rank, olddata, callbackSearch)
+            }
+            console.log('WARNING: ' + rid + ' unavailable.')
+            pending -= 1
+            checkEmpty(sessionid, callbackSearch)
+          },
+          timeout: 12000,
+          dataType: 'json'
+        })
+      }
+    }
+
     var rid, hits, olddata
     var i = 0
     var rank = 1
@@ -648,11 +651,10 @@ var searsia = (function () {
     } else {
       resource = getMother()
     }
-    callbackSearch({ 'searsia': SEARSIAVERSION, 'status': 'start', 'resource': resource })
+    callbackSearch({ 'searsia': SEARSIAVERSION, 'status': 'start', 'sessionid': sessionid, 'resource': resource })
     hits = data.hits
-    globalPending = 0 // global
     if (hits == null || hits.length === 0) {
-      callbackSearch({ 'searsia': SEARSIAVERSION, 'status': 'done' })
+      callbackSearch({ 'searsia': SEARSIAVERSION, 'status': 'done', 'sessionid': sessionid })
       return
     }
     while (i < hits.length) {
@@ -666,6 +668,7 @@ var searsia = (function () {
           'hits': [ hits[i] ],
           'query': query,
           'status': 'hits',
+          'sessionid': sessionid,
           'rank': rank })
         rank += 1
       } else if (done[rid] !== 1) {
@@ -684,7 +687,7 @@ var searsia = (function () {
         } else {
           olddata.resource = { id: rid } // TODO: get it?
         }
-        getResults(query, resulttype, rid, rank, olddata, callbackSearch)
+        getResults(query, resulttype, sessionid, rid, rank, olddata, callbackSearch)
         done[rid] = 1
         rank += 1
       }
@@ -692,20 +695,35 @@ var searsia = (function () {
     }
   }
 
+  /**
+   * Generates a random identifier compliant with the uuid(v4) spec.
+   * The randomness of this number is based on Math.random(), which might not
+   * be a guaranteed RNG.
+   * @returns {string} the uuid string
+   */
+  function generateUUID () {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,
+      function (c) {
+        var r = Math.random() * 16 | 0; var v = c === 'x' ? r : (r & 0x3 | 0x8)
+        return v.toString(16)
+      })
+  }
+
   function searchFederated (params, callbackSearch) {
     var url, query, page
     var resulttype = null
     var template = getApiTemplate()
+    var sessionid = generateUUID()
     if (template == null) {
       callbackSearch({ 'status': 'error', 'error': 'First initialize with searsia.initClient(apiTemplate)' })
       return
     }
     if (params.q == null || params.q === '') {
-      callbackSearch({ 'status': 'error', 'error': 'No query.' })
+      callbackSearch({ 'status': 'error', 'sessionid': sessionid, 'error': 'No query.' })
       return
     }
     if (params.q.length > 150) {
-      callbackSearch({ 'status': 'error', 'error': 'Query too long.' })
+      callbackSearch({ 'status': 'error', 'sessionid': sessionid, 'error': 'Query too long.' })
       return
     }
     query = params.q
@@ -720,10 +738,10 @@ var searsia = (function () {
     url = fillUrlTemplate(template, query, page, null, resulttype)
     searsiaAjax({
       url: url,
-      success: function (data) { queryResources(query, resulttype, data, callbackSearch) },
+      success: function (data) { queryResources(query, resulttype, sessionid, data, callbackSearch) },
       error: function (xhr, options, error) {
         console.log('ERROR: ' + error)
-        callbackSearch({ 'status': 'error', 'error': 'Temporarily out of order. Please try again later.' })
+        callbackSearch({ 'status': 'error', 'sessionid': sessionid, 'error': 'Temporarily out of order. Please try again later.' })
       },
       timeout: 10000,
       dataType: 'json'
