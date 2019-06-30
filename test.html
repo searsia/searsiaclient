@@ -117,11 +117,11 @@
    
       // search
       var params1 = { 'q': 'mozart', 'p': '1' }
-      searsia.searchFederated(params1, printUnitTestSearch)
+      var id1 = searsia.searchFederated(params1, printUnitTestSearch)
+      printText('Call 1 = ' + id1);
       var params2 = { 'q': 'bach', 'p': '1' }
-      searsia.searchFederated(params2, printUnitTestSearch)
-
-
+      var id2 = searsia.searchFederated(params2, printUnitTestSearch)
+      printText('Call 2 = ' + id2);
 
       -->
     </script>
