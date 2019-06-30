@@ -225,28 +225,6 @@ var searsia = (function () {
     return template.replace(/\{[A-Za-z]+\?\}/g, '') // remove all optional
   }
 
-  function scoreHit (hit, i, query, prior) {
-    var text, queryTerms
-    var score = 0
-    if (!prior) { prior = 0.0 }
-    query = normalizeText(printableQuery(query))
-    queryTerms = query.split(/ +/) // TODO: This might not work for all character encodings
-    if (hit.description != null) {
-      text = hit.title + ' ' + hit.description
-    } else {
-      text = hit.title
-    }
-    if (text != null) {
-      if (text.length > 300) { text = text.substring(0, 300) }
-      score = scoreText(text, queryTerms)
-    }
-    score += prior - (i / 10)
-    if (score < 0) {
-      score = 0
-    }
-    return score
-  }
-
   function addToHits (hits, hit) {
     var i
     var newIndex = hits.length
@@ -494,7 +472,11 @@ var searsia = (function () {
     var typeTitleOnly = true
     var count = data.hits.length - 1
     var prior = null
+    var maxScore = 10
 
+    if (count >= maxScore) {
+      maxScore = count + 1
+    }
     resource = data.resource
     prior = Number(resource.prior)
     if (isNaN(prior) || prior == null) { prior = 0.0 }
@@ -510,7 +492,10 @@ var searsia = (function () {
       } else {
         hit.title = noHTMLelement(hit.title)
       }
-      hit.score = scoreHit(hit, i, query, (prior / rank)) // TODO: more costly now!
+      hit.score = 1 / Math.sqrt(rank) - i / maxScore
+      if (hit.score < 0.001) {
+        hit.score = 0.001
+      }
       if (hit.url == null) {
         if (resource.urltemplate != null) {
           hit.url = fillUrlTemplate(resource.urltemplate, encodedQuery(hit.title), 1, '', resulttype)
@@ -547,10 +532,6 @@ var searsia = (function () {
       }
       if (hit.tags == null || hit.tags.indexOf('image') === -1) {
         typeImages = false
-      }
-      if (i < count && data.hits[i + 1].score > hit.score) {
-        data.hits[i] = data.hits[i + 1] // bubbling the best scoring hit up
-        data.hits[i + 1] = hit
       }
     }
     if (typeImages) {
