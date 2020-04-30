@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Searsia Library v1.2.0:
+ * Searsia Library v1.3.0:
  *
  *   The web page should first call searsia.initClient(template) and then
  *   searsia.searchFederated(params, callback), see: exampleclient.js
@@ -23,7 +23,7 @@
 'use strict'
 
 var searsia = (function () {
-  var SEARSIAVERSION = 'v1.2.0'
+  var SEARSIAVERSION = 'v1.3.0'
   var globalId = null
   var globalApiTemplate = null
   var globalMother = null
@@ -545,12 +545,14 @@ var searsia = (function () {
     }
   }
 
-  function returnResults (query, resulttype, sessionid, data, rank, olddata, callbackSearch) {
+  function returnResults (query, resulttype, sessionid, rid, data, rank, olddata, callbackSearch) {
     var newscore, oldscore
     var liveResults = true
     var count = 0
-    if (data.resource && data.resource.apitemplate) { // TODO: why apitemplate necessary?
+    if (data.resource) {
       setLocalResource(data.resource)
+    } else {
+      data.resource = { 'id': rid }
     }
     if (data.hits && data.hits.length) {
       count = data.hits.length // TODO: also includes 'rid'-only results from searsia engines
@@ -599,7 +601,7 @@ var searsia = (function () {
         searsiaAjax({
           url: fillUrlTemplate(template, query, 1, rid, resulttype),
           success: function (data) {
-            returnResults(query, resulttype, sessionid, data, rank, olddata, callbackSearch)
+            returnResults(query, resulttype, sessionid, rid, data, rank, olddata, callbackSearch)
             pending -= 1
             checkEmpty(sessionid, callbackSearch)
           },
@@ -607,7 +609,7 @@ var searsia = (function () {
             if (xhr.status === 410) {
               deleteLocalResource(rid)
             } else {
-              returnResults(query, resulttype, sessionid, olddata, rank, olddata, callbackSearch)
+              returnResults(query, resulttype, sessionid, rid, olddata, rank, olddata, callbackSearch)
             }
             console.log('WARNING: ' + rid + ' unavailable.')
             pending -= 1
