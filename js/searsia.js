@@ -727,7 +727,6 @@ var searsia = (function () {
       timeout: 10000,
       dataType: 'json'
     })
-    return sessionid
   }
 
   /* connect to mother and return definition */
@@ -798,7 +797,7 @@ var searsia = (function () {
       connectToServer(callbackConnect)
     },
     searchFederated: function (params, callbackSearch) {
-      return searchFederated(params, callbackSearch)
+      searchFederated(params, callbackSearch)
     }
   }
 })()
