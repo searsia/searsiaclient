@@ -48,7 +48,7 @@
         if (result == null) {
           text += ': passed'
         } else {
-          text += ': failed. Got: ' + result
+          text += ': failed. Expected null. Got: ' + result
         }
         printText(text)
       }
@@ -105,12 +105,18 @@
         searsia.fillUrlTemplate(template, 'test', null, null, null))
       printTestEquals('template 3', 'https://drsheetmusic.com/searsia/test.json?q=other&page=1&type=&optional=', 
         searsia.fillUrlTemplate(template, 'other', '1', 'test', null))
-      console.log("TEMPlATE 4")
       printTestEquals('template 4', 'https://drsheetmusic.com/searsia/view.json?q=help&page=1&type=video&optional=', 
         searsia.fillUrlTemplate(template, 'help', 1, 'view', 'video'))
 
       // init
+      var teststring = 'do not remove this, please.'
+      var field = 'foo'
+      window.localStorage[field] = teststring
+      window.localStorage['searsia-' + field] = 'please remove'
       printTestIsNull('init 1', searsia.initClient(template))
+      printTestEquals('local storage', teststring, window.localStorage[field])
+      printTestIsNull('Searsia store', window.localStorage['searsia-' + field])
+
  
       // connect
       searsia.connectToServer(printUnitTestConnect)

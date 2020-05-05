@@ -80,29 +80,35 @@ var searsia = (function () {
   /* Basic local storage functions */
 
   function clearLocalStorage () {
+    var i, key
     try {
-      window.localStorage.clear()
+      for (i = 0; i < window.localStorage.length; i++) {
+        key = window.localStorage.key(i)
+        if (key.startsWith('searsia-')) {
+          window.localStorage.removeItem(key)
+        }
+      }
     } catch (ignore) { }
   }
 
   function setLocalStorage (field, value) {
     if (value != null) {
       try {
-        window.localStorage['searsia-' + field] = value
+        window.localStorage.setItem('searsia-' + field, value)
       } catch (ignore) { }
     }
   }
 
   function deleteLocalStorage (field) {
     try {
-      window.localStorage['searsia-' + field] = null
+      window.localStorage.removeItem('searsia-' + field)
     } catch (ignore) { }
   }
 
   function getLocalStorage (field) {
     var value = null
     try {
-      value = window.localStorage['searsia-' + field]
+      value = window.localStorage.getItem('searsia-' + field)
     } catch (ignore) { }
     return value
   }
